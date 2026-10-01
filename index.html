@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulir Pendaftaran Peserta Didik Baru</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
+        .form-container { max-width: 800px; margin: 30px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .step { display: none; }
+        .step.active { display: block; }
+        .progress-bar-custom { height: 8px; background: #e9ecef; border-radius: 5px; margin-bottom: 20px; }
+        .progress-bar-fill { height: 100%; background: #0d6efd; border-radius: 5px; transition: width 0.3s; }
+        .btn-next, .btn-prev { margin-top: 20px; }
+        .header-school { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #0d6efd; padding-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="form-container">
+        <div class="header-school">
+            <h3>FORMULIR PESERTA DIDIK BARU</h3>
+            <p class="text-muted">Tahun Ajaran 2024/2025</p>
+        </div>
+
+        <div class="progress-bar-custom">
+            <div class="progress-bar-fill" id="progressBar" style="width: 25%"></div>
+        </div>
+
+        <form id="ppdbForm">
+            <!-- STEP 1: DATA PRIBADI -->
+            <div class="step active" id="step1">
+                <h5 class="mb-3">1. Data Pribadi Peserta Didik</h5>
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="nama_lengkap" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Jenis Kelamin <span class="text-danger">*</span></label>
+                        <select class="form-select" name="jenis_kelamin" required>
+                            <option value="">Pilih...</option>
+                            <option value="Laki-laki">Laki-laki</option>
+                            <option value="Perempuan">Perempuan</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">NISN</label>
+                        <input type="text" class="form-control" name="nisn" maxlength="10">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">NIK <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="nik" maxlength="16" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">No. KK <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="no_kk" maxlength="16" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Tempat Lahir <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="tempat_lahir" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Tanggal Lahir <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="tanggal_lahir" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Agama</label>
+                        <select class="form-select" name="agama">
+                            <option value="Islam">Islam</option>
+                            <option value="Kristen">Kristen</option>
+                            <option value="Katolik">Katolik</option>
+                            <option value="Hindu">Hindu</option>
+                            <option value="Budha">Budha</option>
+                            <option value="Khonghucu">Khonghucu</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Alamat Lengkap <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="alamat_lengkap" rows="2" required></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">No. HP Aktif <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" name="no_hp" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-primary btn-next" onclick="nextStep(1)">Lanjut &rarr;</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: DATA ORANG TUA -->
+            <div class="step" id="step2">
+                <h5 class="mb-3">2. Data Orang Tua & Wali</h5>
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">Nama Ayah</label><input type="text" class="form-control" name="nama_ayah"></div>
+                    <div class="col-md-6"><label class="form-label">NIK Ayah</label><input type="text" class="form-control" name="nik_ayah" maxlength="16"></div>
+                    <div class="col-md-6"><label class="form-label">Pekerjaan Ayah</label><input type="text" class="form-control" name="pekerjaan_ayah"></div>
+                    
+                    <div class="col-12"><hr></div>
+                    
+                    <div class="col-md-6"><label class="form-label">Nama Ibu</label><input type="text" class="form-control" name="nama_ibu"></div>
+                    <div class="col-md-6"><label class="form-label">NIK Ibu</label><input type="text" class="form-control" name="nik_ibu" maxlength="16"></div>
+                    <div class="col-md-6"><label class="form-label">Pekerjaan Ibu</label><input type="text" class="form-control" name="pekerjaan_ibu"></div>
+
+                    <div class="col-12"><hr></div>
+                    
+                    <div class="col-md-6"><label class="form-label">Nama Wali (Jika ada)</label><input type="text" class="form-control" name="nama_wali"></div>
+                    <div class="col-md-6"><label class="form-label">NIK Wali</label><input type="text" class="form-control" name="nik_wali" maxlength="16"></div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(2)">&larr; Kembali</button>
+                    <button type="button" class="btn btn-primary btn-next" onclick="nextStep(2)">Lanjut &rarr;</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: DATA PERIODIK & ASAL -->
+            <div class="step" id="step3">
+                <h5 class="mb-3">3. Data Periodik & Asal Sekolah</h5>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Tinggi Badan (cm)</label><input type="number" class="form-control" name="tinggi"></div>
+                    <div class="col-md-4"><label class="form-label">Berat Badan (kg)</label><input type="number" class="form-control" name="berat"></div>
+                    <div class="col-md-4"><label class="form-label">Jarak ke Sekolah</label><input type="text" class="form-control" name="jarak_sekolah" placeholder="Contoh: 2 km"></div>
+                    <div class="col-md-6"><label class="form-label">Asal Sekolah (SMP/MI)</label><input type="text" class="form-control" name="sekolah_asal"></div>
+                    <div class="col-md-6"><label class="form-label">No. Peserta UN</label><input type="text" class="form-control" name="no_peserta_un"></div>
+                    
+                    <div class="col-12"><hr></div>
+                    <div class="col-md-6"><label class="form-label">Prestasi (Sebutkan yang tertinggi)</label><input type="text" class="form-control" name="prestasi" placeholder="Contoh: Juara 1 OSN Matematika Tingkat Kab"></div>
+                    <div class="col-md-3">
+                        <label class="form-label">Pemilik KIP</label>
+                        <select class="form-select" name="status_kip">
+                            <option value="Tidak">Tidak</option>
+                            <option value="Ya">Ya</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3"><label class="form-label">Beasiswa Lain</label><input type="text" class="form-control" name="beasiswa"></div>
+                    
+                    <div class="col-12">
+                        <label class="form-label">Catatan Tambahan (Opsional)</label>
+                        <textarea class="form-control" name="catatan_tambahan" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(3)">&larr; Kembali</button>
+                    <button type="button" class="btn btn-success btn-next" onclick="nextStep(3)">Lanjut ke Konfirmasi &rarr;</button>
+                </div>
+            </div>
+
+            <!-- STEP 4: KONFIRMASI -->
+            <div class="step" id="step4">
+                <h5 class="mb-3">4. Konfirmasi & Pengiriman</h5>
+                <div class="alert alert-info">
+                    <p>Harap periksa kembali data yang Anda isi. Pastikan <strong>NIK, No KK, dan Nama</strong> sudah sesuai dengan dokumen resmi (Akta/KK).</p>
+                    <p>Dengan menekan tombol "Kirim Data", Anda menyatakan bahwa data yang diisi adalah benar dan dapat dipertanggungjawabkan.</p>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(4)">&larr; Kembali</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmit">
+                        <span class="spinner-border spinner-border-sm d-none" id="loader"></span>
+                        Kirim & Cetak Formulir
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- HASIL SUKSES -->
+        <div id="successMessage" class="d-none text-center mt-4">
+            <div class="alert alert-success">
+                <h4>✅ Pendaftaran Berhasil!</h4>
+                <p>Data Anda telah tersimpan di sistem sekolah.</p>
+                <p>Silakan klik tombol di bawah untuk mengunduh dan mencetak formulir Anda:</p>
+                <a href="#" id="pdfLink" target="_blank" class="btn btn-lg btn-success">📄 Download & Cetak PDF Formulir</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // GANTI DENGAN URL WEB APP ANDA DARI LANGKAH 1
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxA3W9gNyR20V_wlxkgQYmkCMwf49H0jZK7hzhnHa7G6c48435FLY7uG25FOsQK7qY6kQ/exec'; 
+
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    function updateProgress() {
+        const progress = (currentStep / totalSteps) * 100;
+        document.getElementById('progressBar').style.width = progress + '%';
+    }
+
+    function nextStep(step) {
+        // Validasi sederhana step 1
+        if(step === 1) {
+            const requiredFields = document.querySelectorAll('#step1 [required]');
+            for(let field of requiredFields) {
+                if(!field.value.trim()) {
+                    alert('Harap isi semua kolom yang bertanda bintang (*)');
+                    field.focus();
+                    return;
+                }
+            }
+        }
+        
+        document.getElementById(`step${step}`).classList.remove('active');
+        document.getElementById(`step${step + 1}`).classList.add('active');
+        currentStep++;
+        updateProgress();
+    }
+
+    function prevStep(step) {
+        document.getElementById(`step${step}`).classList.remove('active');
+        document.getElementById(`step${step - 1}`).classList.add('active');
+        currentStep--;
+        updateProgress();
+    }
+
+    document.getElementById('ppdbForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('btnSubmit');
+        const loader = document.getElementById('loader');
+        btn.disabled = true;
+        loader.classList.remove('d-none');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...';
+
+        // Kumpulkan semua data
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => data[key] = value);
+
+        // Kirim ke Apps Script (Gunakan text/plain untuk menghindari masalah CORS)
+        fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if(result.status === 'success') {
+                document.getElementById('ppdbForm').classList.add('d-none');
+                document.querySelector('.progress-bar-custom').classList.add('d-none');
+                document.getElementById('successMessage').classList.remove('d-none');
+                document.getElementById('pdfLink').href = result.pdf_url;
+            } else {
+                alert('Terjadi kesalahan: ' + result.message);
+                resetButton();
+            }
+        })
+        .catch(error => {
+            alert('Gagal terhubung ke server. Periksa koneksi internet Anda.');
+            console.error(error);
+            resetButton();
+        });
+    });
+
+    function resetButton() {
+        const btn = document.getElementById('btnSubmit');
+        btn.disabled = false;
+        loader.classList.add('d-none');
+        btn.innerHTML = 'Kirim & Cetak Formulir';
+    }
+</script>
+</body>
+</html>
