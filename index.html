@@ -3,287 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulir Peserta Didik (F-PD) Kemendikbud</title>
+    <title>Formulir Peserta Didik (F-PD)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
-        .form-container { max-width: 850px; margin: 30px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
-        .step { display: none; } .step.active { display: block; animation: fadeIn 0.4s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .progress { height: 8px; margin-bottom: 25px; }
-        .section-title { color: #0d6efd; border-bottom: 2px solid #0d6efd; padding-bottom: 8px; margin-bottom: 20px; font-weight: 600; }
-        .form-label { font-weight: 500; font-size: 0.9rem; }
-        .btn-nav { min-width: 120px; }
+        .box { max-width: 850px; margin: 20px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .step { display: none; }
+        .step.active { display: block; }
+        .progress { height: 8px; margin-bottom: 20px; }
+        .judul { color: #0d6efd; border-bottom: 2px solid #0d6efd; padding-bottom: 6px; margin-bottom: 15px; }
+        label { font-weight: 500; font-size: 0.9rem; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <div class="form-container">
-        <div class="text-center mb-4">
-            <h4 class="fw-bold text-primary">FORMULIR PESERTA DIDIK (F-PD)</h4>
-            <p class="text-muted mb-0">Isi data dengan lengkap dan benar sesuai dokumen resmi (Akta/KK)</p>
+<div class="box">
+    <div class="text-center mb-3">
+        <h4 class="fw-bold text-primary">FORMULIR PESERTA DIDIK (F-PD)</h4>
+        <p class="text-muted">Isi sesuai dokumen resmi (Akta/KK)</p>
+    </div>
+
+    <div class="progress"><div class="progress-bar" id="prog" style="width:16%"></div></div>
+
+    <!-- PENTING: novalidate mencegah browser memblokir submit diam-diam -->
+    <form id="fpdForm" novalidate>
+
+        <!-- STEP 1 -->
+        <div class="step active" id="s1">
+            <h5 class="judul">Data Pribadi</h5>
+            <div class="row g-3">
+                <div class="col-12"><label>Nama Lengkap *</label><input type="text" class="form-control" name="nama_lengkap"></div>
+                <div class="col-md-6"><label>Jenis Kelamin *</label><select class="form-select" name="jenis_kelamin"><option value="">Pilih</option><option>Laki-laki</option><option>Perempuan</option></select></div>
+                <div class="col-md-6"><label>NISN</label><input type="text" class="form-control" name="nisn"></div>
+                <div class="col-md-6"><label>NIK *</label><input type="text" class="form-control" name="nik"></div>
+                <div class="col-md-6"><label>No KK *</label><input type="text" class="form-control" name="no_kk"></div>
+                <div class="col-md-6"><label>Tempat Lahir *</label><input type="text" class="form-control" name="tempat_lahir"></div>
+                <div class="col-md-6"><label>Tanggal Lahir *</label><input type="date" class="form-control" name="tanggal_lahir"></div>
+                <div class="col-md-6"><label>No Reg Akta</label><input type="text" class="form-control" name="no_registrasi_akta"></div>
+                <div class="col-md-6"><label>Agama</label><select class="form-select" name="agama"><option>Islam</option><option>Kristen/Protestan</option><option>Katholik</option><option>Hindu</option><option>Budha</option><option>Khonghucu</option><option>Kepercayaan Kpd Tuhan YME</option></select></div>
+                <div class="col-md-6"><label>Kewarganegaraan</label><select class="form-select" name="kewarganegaraan"><option>Indonesia (WNI)</option><option>Asing (WNA)</option></select></div>
+                <div class="col-12"><label>Berkebutuhan Khusus</label><select class="form-select" name="berkebutuhan_khusus"><option>Tidak</option><option>Netra (A)</option><option>Rungu (B)</option><option>Grahita ringan (C)</option><option>Grahita Sedang (C1)</option><option>Daksa Ringan (D)</option><option>Daksa Sedang (D1)</option><option>Wicara (F)</option><option>Tuna ganda (G)</option><option>Hiper aktif (H)</option><option>Cerdas Istimewa (I)</option><option>Bakat Istimewa (J)</option><option>Kesulitan Belajar (K)</option><option>Autis (Q)</option></select></div>
+            </div>
+            <div class="d-flex justify-content-end mt-3"><button type="button" class="btn btn-primary" onclick="go(2)">Lanjut →</button></div>
         </div>
 
-        <div class="progress">
-            <div class="progress-bar bg-primary" id="progressBar" role="progressbar" style="width: 16%"></div>
+        <!-- STEP 2 -->
+        <div class="step" id="s2">
+            <h5 class="judul">Alamat & Data Periodik</h5>
+            <div class="row g-3">
+                <div class="col-12"><label>Alamat Jalan</label><textarea class="form-control" name="alamat_jalan" rows="2"></textarea></div>
+                <div class="col-md-3"><label>RT</label><input type="text" class="form-control" name="rt"></div>
+                <div class="col-md-3"><label>RW</label><input type="text" class="form-control" name="rw"></div>
+                <div class="col-md-6"><label>Dusun</label><input type="text" class="form-control" name="nama_dusun"></div>
+                <div class="col-md-6"><label>Kelurahan/Desa</label><input type="text" class="form-control" name="nama_kelurahan"></div>
+                <div class="col-md-6"><label>Kecamatan</label><input type="text" class="form-control" name="kecamatan"></div>
+                <div class="col-md-4"><label>Kode Pos</label><input type="text" class="form-control" name="kode_pos"></div>
+                <div class="col-md-4"><label>Lintang</label><input type="text" class="form-control" name="lintang"></div>
+                <div class="col-md-4"><label>Bujur</label><input type="text" class="form-control" name="bujur"></div>
+                <div class="col-md-6"><label>Tempat Tinggal</label><select class="form-select" name="tempat_tinggal"><option>Bersama orang tua</option><option>Wali</option><option>Kos</option><option>Asrama</option><option>Panti Asuhan</option></select></div>
+                <div class="col-md-6"><label>Moda Transportasi</label><select class="form-select" name="moda_transportasi"><option>Jalan kaki</option><option>Kendaraan pribadi</option><option>Kendaraan Umum</option><option>Jemputan Sekolah</option><option>Kereta Api</option><option>Ojek</option><option>Lainnya</option></select></div>
+                <div class="col-md-4"><label>Anak ke-</label><input type="number" class="form-control" name="anak_ke"></div>
+                <div class="col-md-8"><label>Pekerjaan Siswa</label><select class="form-select" name="pekerjaan_siswa"><option>Tidak bekerja</option><option>Nelayan</option><option>Petani</option><option>Karyawan</option><option>Wiraswasta</option><option>Lainnya</option></select></div>
+                <div class="col-md-4"><label>Tinggi (cm)</label><input type="number" class="form-control" name="tinggi_badan"></div>
+                <div class="col-md-4"><label>Berat (kg)</label><input type="number" class="form-control" name="berat_badan"></div>
+                <div class="col-md-4"><label>Lingkar Kepala (cm)</label><input type="number" class="form-control" name="lingkar_kepala"></div>
+                <div class="col-md-6"><label>Jarak ke Sekolah</label><select class="form-select" name="jarak_ke_sekolah"><option>Kurang dari 1 km</option><option>Lebih dari 1 km</option></select></div>
+                <div class="col-md-6"><label>Jarak (km)</label><input type="number" class="form-control" name="jarak_km"></div>
+                <div class="col-md-6"><label>Waktu Tempuh (Jam)</label><input type="number" class="form-control" name="waktu_tempuh_jam"></div>
+                <div class="col-md-6"><label>Waktu Tempuh (Menit)</label><input type="number" class="form-control" name="waktu_tempuh_menit"></div>
+                <div class="col-12"><label>Jumlah Saudara Kandung</label><input type="number" class="form-control" name="jumlah_saudara"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+                <button type="button" class="btn btn-secondary" onclick="go(1)">← Kembali</button>
+                <button type="button" class="btn btn-primary" onclick="go(3)">Lanjut →</button>
+            </div>
         </div>
 
-        <form id="fpdForm">
-            <!-- STEP 1: DATA PRIBADI UTAMA -->
-            <div class="step active" id="step1">
-                <h5 class="section-title">1. Data Pribadi Peserta Didik</h5>
-                <div class="row g-3">
-                    <div class="col-12"><label class="form-label">Nama Lengkap <span class="text-danger">*</span></label><input type="text" class="form-control" name="nama_lengkap" required></div>
-                    <div class="col-md-6"><label class="form-label">Jenis Kelamin <span class="text-danger">*</span></label><select class="form-select" name="jenis_kelamin" required><option value="">Pilih...</option><option>Laki-laki</option><option>Perempuan</option></select></div>
-                    <div class="col-md-6"><label class="form-label">NISN</label><input type="text" class="form-control" name="nisn" maxlength="10"></div>
-                    <div class="col-md-6"><label class="form-label">NIK <span class="text-danger">*</span></label><input type="text" class="form-control" name="nik" maxlength="16" required></div>
-                    <div class="col-md-6"><label class="form-label">No KK <span class="text-danger">*</span></label><input type="text" class="form-control" name="no_kk" maxlength="16" required></div>
-                    <div class="col-md-6"><label class="form-label">Tempat Lahir <span class="text-danger">*</span></label><input type="text" class="form-control" name="tempat_lahir" required></div>
-                    <div class="col-md-6"><label class="form-label">Tanggal Lahir <span class="text-danger">*</span></label><input type="date" class="form-control" name="tanggal_lahir" required></div>
-                    <div class="col-md-6"><label class="form-label">No Registrasi Akta Lahir</label><input type="text" class="form-control" name="no_registrasi_akta"></div>
-                    <div class="col-md-6"><label class="form-label">Agama / Kepercayaan</label><select class="form-select" name="agama"><option>Islam</option><option>Kristen/Protestan</option><option>Katholik</option><option>Hindu</option><option>Budha</option><option>Khonghucu</option><option>Kepercayaan Kpd Tuhan YME</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Kewarganegaraan</label><select class="form-select" name="kewarganegaraan"><option>Indonesia (WNI)</option><option>Asing (WNA)</option></select></div>
-                    <div class="col-12"><label class="form-label">Berkebutuhan Khusus</label><select class="form-select" name="berkebutuhan_khusus"><option>Tidak</option><option>Netra (A)</option><option>Rungu (B)</option><option>Grahita (C)</option><option>Daksa (D)</option><option>Wicara (F)</option><option>Tuna Ganda (G)</option><option>Hiper Aktif (H)</option><option>Cerdas Istimewa (I)</option><option>Bakat Istimewa (J)</option><option>Kesulitan Belajar (K)</option><option>Autis (Q)</option></select></div>
-                </div>
-                <div class="d-flex justify-content-end mt-4"><button type="button" class="btn btn-primary btn-nav" onclick="nextStep(1)">Lanjut &rarr;</button></div>
+        <!-- STEP 3 -->
+        <div class="step" id="s3">
+            <h5 class="judul">Data Ayah & Ibu Kandung</h5>
+            <h6 class="text-primary">Ayah Kandung</h6>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6"><label>Nama Ayah</label><input type="text" class="form-control" name="nama_ayah"></div>
+                <div class="col-md-6"><label>NIK Ayah</label><input type="text" class="form-control" name="nik_ayah"></div>
+                <div class="col-md-4"><label>Tahun Lahir</label><input type="number" class="form-control" name="tahun_lahir_ayah"></div>
+                <div class="col-md-4"><label>Pendidikan</label><select class="form-select" name="pendidikan_ayah"><option>Tidak sekolah</option><option>Putus SD</option><option>SD Sederajat</option><option>SMP Sederajat</option><option>SMA Sederajat</option><option>D1</option><option>D2</option><option>D3</option><option>D4/S1</option><option>S2</option><option>S3</option></select></div>
+                <div class="col-md-4"><label>Pekerjaan</label><select class="form-select" name="pekerjaan_ayah"><option>Tidak bekerja</option><option>Nelayan</option><option>Petani</option><option>Peternak</option><option>PNS/TNI/POLRI</option><option>Karyawan Swasta</option><option>Pedagang Kecil</option><option>Pedagang Besar</option><option>Wiraswasta</option><option>Wirausaha</option><option>Buruh</option><option>Pensiunan</option><option>Meninggal Dunia</option></select></div>
+                <div class="col-md-6"><label>Penghasilan</label><select class="form-select" name="penghasilan_ayah"><option>Kurang dari Rp 500.000</option><option>Rp 500.000 - Rp 999.999</option><option>Rp 1.000.000 - Rp 1.999.999</option><option>Rp 2.000.000 - Rp 4.999.999</option><option>Rp 5.000.000 - Rp 20.000.000</option><option>Lebih dari Rp 20.000.000</option><option>Tidak Berpenghasilan</option></select></div>
+                <div class="col-md-6"><label>Berkebutuhan Khusus</label><select class="form-select" name="berkebutuhan_khusus_ayah"><option>Tidak</option><option>Netra (A)</option><option>Rungu (B)</option><option>Lainnya</option></select></div>
             </div>
-
-            <!-- STEP 2: ALAMAT & PERIODIK -->
-            <div class="step" id="step2">
-                <h5 class="section-title">2. Alamat & Data Periodik</h5>
-                <div class="row g-3">
-                    <div class="col-12"><label class="form-label">Alamat Jalan</label><textarea class="form-control" name="alamat_jalan" rows="2"></textarea></div>
-                    <div class="col-md-3"><label class="form-label">RT</label><input type="text" class="form-control" name="rt"></div>
-                    <div class="col-md-3"><label class="form-label">RW</label><input type="text" class="form-control" name="rw"></div>
-                    <div class="col-md-6"><label class="form-label">Dusun</label><input type="text" class="form-control" name="nama_dusun"></div>
-                    <div class="col-md-6"><label class="form-label">Kelurahan/Desa</label><input type="text" class="form-control" name="nama_kelurahan"></div>
-                    <div class="col-md-6"><label class="form-label">Kecamatan</label><input type="text" class="form-control" name="kecamatan"></div>
-                    <div class="col-md-4"><label class="form-label">Kode Pos</label><input type="text" class="form-control" name="kode_pos"></div>
-                    <div class="col-md-4"><label class="form-label">Lintang</label><input type="text" class="form-control" name="lintang"></div>
-                    <div class="col-md-4"><label class="form-label">Bujur</label><input type="text" class="form-control" name="bujur"></div>
-                    
-                    <hr class="my-2">
-                    <div class="col-md-6"><label class="form-label">Tempat Tinggal</label><select class="form-select" name="tempat_tinggal"><option>Bersama orang tua</option><option>Wali</option><option>Kos</option><option>Asrama</option><option>Panti Asuhan</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Moda Transportasi</label><select class="form-select" name="moda_transportasi"><option>Jalan kaki</option><option>Kendaraan pribadi</option><option>Kendaraan Umum</option><option>Jemputan Sekolah</option><option>Kereta Api</option><option>Ojek</option><option>Lainnya</option></select></div>
-                    <div class="col-md-4"><label class="form-label">Anak ke-</label><input type="number" class="form-control" name="anak_ke"></div>
-                    <div class="col-md-8"><label class="form-label">Pekerjaan Siswa (jika bekerja)</label><select class="form-select" name="pekerjaan_siswa"><option>Tidak bekerja</option><option>Nelayan</option><option>Petani</option><option>Peternak</option><option>Karyawan</option><option>Wiraswasta</option><option>Lainnya</option></select></div>
-                    
-                    <hr class="my-2">
-                    <div class="col-md-4"><label class="form-label">Tinggi (cm)</label><input type="number" class="form-control" name="tinggi_badan"></div>
-                    <div class="col-md-4"><label class="form-label">Berat (kg)</label><input type="number" class="form-control" name="berat_badan"></div>
-                    <div class="col-md-4"><label class="form-label">Lingkar Kepala (cm)</label><input type="number" class="form-control" name="lingkar_kepala"></div>
-                    <div class="col-md-6"><label class="form-label">Jarak ke Sekolah</label><select class="form-select" name="jarak_ke_sekolah"><option>Kurang dari 1 km</option><option>Lebih dari 1 km</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Sebutkan (km)</label><input type="number" class="form-control" name="jarak_km"></div>
-                    <div class="col-md-6"><label class="form-label">Waktu Tempuh (Jam)</label><input type="number" class="form-control" name="waktu_tempuh_jam"></div>
-                    <div class="col-md-6"><label class="form-label">Waktu Tempuh (Menit)</label><input type="number" class="form-control" name="waktu_tempuh_menit"></div>
-                    <div class="col-12"><label class="form-label">Jumlah Saudara Kandung</label><input type="number" class="form-control" name="jumlah_saudara"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <button type="button" class="btn btn-secondary btn-nav" onclick="prevStep(2)">&larr; Kembali</button>
-                    <button type="button" class="btn btn-primary btn-nav" onclick="nextStep(2)">Lanjut &rarr;</button>
-                </div>
+            <h6 class="text-primary">Ibu Kandung</h6>
+            <div class="row g-3">
+                <div class="col-md-6"><label>Nama Ibu</label><input type="text" class="form-control" name="nama_ibu"></div>
+                <div class="col-md-6"><label>NIK Ibu</label><input type="text" class="form-control" name="nik_ibu"></div>
+                <div class="col-md-4"><label>Tahun Lahir</label><input type="number" class="form-control" name="tahun_lahir_ibu"></div>
+                <div class="col-md-4"><label>Pendidikan</label><select class="form-select" name="pendidikan_ibu"><option>Tidak sekolah</option><option>Putus SD</option><option>SD Sederajat</option><option>SMP Sederajat</option><option>SMA Sederajat</option><option>D1</option><option>D2</option><option>D3</option><option>D4/S1</option><option>S2</option><option>S3</option></select></div>
+                <div class="col-md-4"><label>Pekerjaan</label><select class="form-select" name="pekerjaan_ibu"><option>Tidak bekerja</option><option>Ibu Rumah Tangga</option><option>PNS/TNI/POLRI</option><option>Karyawan Swasta</option><option>Pedagang</option><option>Wiraswasta</option><option>Meninggal Dunia</option></select></div>
+                <div class="col-md-6"><label>Penghasilan</label><select class="form-select" name="penghasilan_ibu"><option>Kurang dari Rp 500.000</option><option>Rp 500.000 - Rp 999.999</option><option>Rp 1.000.000 - Rp 1.999.999</option><option>Rp 2.000.000 - Rp 4.999.999</option><option>Rp 5.000.000 - Rp 20.000.000</option><option>Lebih dari Rp 20.000.000</option><option>Tidak Berpenghasilan</option></select></div>
+                <div class="col-md-6"><label>Berkebutuhan Khusus</label><select class="form-select" name="berkebutuhan_khusus_ibu"><option>Tidak</option><option>Netra (A)</option><option>Rungu (B)</option><option>Lainnya</option></select></div>
             </div>
-
-            <!-- STEP 3: DATA ORANG TUA -->
-            <div class="step" id="step3">
-                <h5 class="section-title">3. Data Ayah & Ibu Kandung</h5>
-                <h6 class="text-primary">Data Ayah Kandung</h6>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6"><label class="form-label">Nama Ayah</label><input type="text" class="form-control" name="nama_ayah"></div>
-                    <div class="col-md-6"><label class="form-label">NIK Ayah</label><input type="text" class="form-control" name="nik_ayah" maxlength="16"></div>
-                    <div class="col-md-4"><label class="form-label">Tahun Lahir</label><input type="number" class="form-control" name="tahun_lahir_ayah" maxlength="4"></div>
-                    <div class="col-md-4"><label class="form-label">Pendidikan</label><select class="form-select" name="pendidikan_ayah"><option>Tidak sekolah</option><option>Putus SD</option><option>SD Sederajat</option><option>SMP Sederajat</option><option>SMA Sederajat</option><option>D1/D2/D3</option><option>D4/S1</option><option>S2</option><option>S3</option></select></div>
-                    <div class="col-md-4"><label class="form-label">Pekerjaan</label><select class="form-select" name="pekerjaan_ayah"><option>Tidak bekerja</option><option>Nelayan</option><option>Petani</option><option>Peternak</option><option>PNS/TNI/POLRI</option><option>Karyawan Swasta</option><option>Pedagang</option><option>Wiraswasta</option><option>Buruh</option><option>Pensiunan</option><option>Meninggal Dunia</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Penghasilan Bulanan</label><select class="form-select" name="penghasilan_ayah"><option>< Rp. 500.000</option><option>Rp. 500.000 - 999.999</option><option>Rp. 1.000.000 - 1.999.999</option><option>Rp. 2.000.000 - 4.999.999</option><option>Rp. 5.000.000 - 20.000.000</option><option>> Rp. 20.000.000</option><option>Tidak Berpenghasilan</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Berkebutuhan Khusus</label><select class="form-select" name="berkebutuhan_khusus_ayah"><option>Tidak</option><option>Netra (A)</option><option>Rungu (B)</option><option>Lainnya</option></select></div>
-                </div>
-
-                <h6 class="text-primary">Data Ibu Kandung</h6>
-                <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label">Nama Ibu</label><input type="text" class="form-control" name="nama_ibu"></div>
-                    <div class="col-md-6"><label class="form-label">NIK Ibu</label><input type="text" class="form-control" name="nik_ibu" maxlength="16"></div>
-                    <div class="col-md-4"><label class="form-label">Tahun Lahir</label><input type="number" class="form-control" name="tahun_lahir_ibu" maxlength="4"></div>
-                    <div class="col-md-4"><label class="form-label">Pendidikan</label><select class="form-select" name="pendidikan_ibu"><option>Tidak sekolah</option><option>Putus SD</option><option>SD Sederajat</option><option>SMP Sederajat</option><option>SMA Sederajat</option><option>D1/D2/D3</option><option>D4/S1</option><option>S2</option><option>S3</option></select></div>
-                    <div class="col-md-4"><label class="form-label">Pekerjaan</label><select class="form-select" name="pekerjaan_ibu"><option>Tidak bekerja</option><option>Ibu Rumah Tangga</option><option>PNS/TNI/POLRI</option><option>Karyawan Swasta</option><option>Pedagang</option><option>Wiraswasta</option><option>Meninggal Dunia</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Penghasilan Bulanan</label><select class="form-select" name="penghasilan_ibu"><option>< Rp. 500.000</option><option>Rp. 500.000 - 999.999</option><option>Rp. 1.000.000 - 1.999.999</option><option>Rp. 2.000.000 - 4.999.999</option><option>Rp. 5.000.000 - 20.000.000</option><option>> Rp. 20.000.000</option><option>Tidak Berpenghasilan</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Berkebutuhan Khusus</label><select class="form-select" name="berkebutuhan_khusus_ibu"><option>Tidak</option><option>Netra (A)</option><option>Rungu (B)</option><option>Lainnya</option></select></div>
-                </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <button type="button" class="btn btn-secondary btn-nav" onclick="prevStep(3)">&larr; Kembali</button>
-                    <button type="button" class="btn btn-primary btn-nav" onclick="nextStep(3)">Lanjut &rarr;</button>
-                </div>
+            <div class="d-flex justify-content-between mt-3">
+                <button type="button" class="btn btn-secondary" onclick="go(2)">← Kembali</button>
+                <button type="button" class="btn btn-primary" onclick="go(4)">Lanjut →</button>
             </div>
+        </div>
 
-            <!-- STEP 4: WALI, KONTAK, KIP -->
-            <div class="step" id="step4">
-                <h5 class="section-title">4. Data Wali, Kontak & KIP</h5>
-                <h6 class="text-primary">Data Wali (Jika Ada)</h6>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6"><label class="form-label">Nama Wali</label><input type="text" class="form-control" name="nama_wali"></div>
-                    <div class="col-md-6"><label class="form-label">NIK Wali</label><input type="text" class="form-control" name="nik_wali" maxlength="16"></div>
-                    <div class="col-md-4"><label class="form-label">Tahun Lahir</label><input type="number" class="form-control" name="tahun_lahir_wali"></div>
-                    <div class="col-md-4"><label class="form-label">Pendidikan</label><select class="form-select" name="pendidikan_wali"><option>SD</option><option>SMP</option><option>SMA</option><option>D1/D2/D3</option><option>S1/D4</option><option>S2/S3</option></select></div>
-                    <div class="col-md-4"><label class="form-label">Pekerjaan</label><input type="text" class="form-control" name="pekerjaan_wali"></div>
-                    <div class="col-md-6"><label class="form-label">Penghasilan Wali</label><select class="form-select" name="penghasilan_wali"><option>< Rp. 500.000</option><option>Rp. 1.000.000 - 4.999.999</option><option>> Rp. 5.000.000</option><option>Tidak Berpenghasilan</option></select></div>
-                </div>
-
-                <h6 class="text-primary">Kontak & KIP</h6>
-                <div class="row g-3">
-                    <div class="col-md-4"><label class="form-label">No. Telp Rumah</label><input type="text" class="form-control" name="telp_rumah"></div>
-                    <div class="col-md-4"><label class="form-label">No. HP <span class="text-danger">*</span></label><input type="tel" class="form-control" name="no_hp" required></div>
-                    <div class="col-md-4"><label class="form-label">Email</label><input type="email" class="form-control" name="email"></div>
-                    <div class="col-md-4"><label class="form-label">Punya KIP?</label><select class="form-select" name="punya_kip"><option>Tidak</option><option>Ya</option></select></div>
-                    <div class="col-md-4"><label class="form-label">Akan menerima KIP?</label><select class="form-select" name="menerima_kip"><option>Tidak</option><option>Ya</option></select></div>
-                    <div class="col-md-4"><label class="form-label">Alasan Menolak PIP</label><input type="text" class="form-control" name="alasan_menolak_pip"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <button type="button" class="btn btn-secondary btn-nav" onclick="prevStep(4)">&larr; Kembali</button>
-                    <button type="button" class="btn btn-primary btn-nav" onclick="nextStep(4)">Lanjut &rarr;</button>
-                </div>
+        <!-- STEP 4 -->
+        <div class="step" id="s4">
+            <h5 class="judul">Wali, Kontak & KIP</h5>
+            <h6 class="text-primary">Data Wali</h6>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6"><label>Nama Wali</label><input type="text" class="form-control" name="nama_wali"></div>
+                <div class="col-md-6"><label>NIK Wali</label><input type="text" class="form-control" name="nik_wali"></div>
+                <div class="col-md-4"><label>Tahun Lahir</label><input type="number" class="form-control" name="tahun_lahir_wali"></div>
+                <div class="col-md-4"><label>Pendidikan</label><select class="form-select" name="pendidikan_wali"><option>SD</option><option>SMP</option><option>SMA</option><option>D1/D2/D3</option><option>S1/D4</option><option>S2/S3</option></select></div>
+                <div class="col-md-4"><label>Pekerjaan</label><input type="text" class="form-control" name="pekerjaan_wali"></div>
+                <div class="col-md-6"><label>Penghasilan</label><select class="form-select" name="penghasilan_wali"><option>Kurang dari Rp 500.000</option><option>Rp 1.000.000 - Rp 4.999.999</option><option>Lebih dari Rp 5.000.000</option><option>Tidak Berpenghasilan</option></select></div>
             </div>
-
-            <!-- STEP 5: PRESTASI, BEASISWA, REGISTRASI -->
-            <div class="step" id="step5">
-                <h5 class="section-title">5. Prestasi, Beasiswa & Registrasi</h5>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6"><label class="form-label">Jenis Prestasi</label><select class="form-select" name="jenis_prestasi"><option>-</option><option>Sains</option><option>Seni</option><option>Olahraga</option><option>Lain-lain</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Tingkat Prestasi</label><select class="form-select" name="tingkat_prestasi"><option>-</option><option>Sekolah</option><option>Kecamatan</option><option>Kabupaten</option><option>Provinsi</option><option>Nasional</option><option>Internasional</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Nama Prestasi</label><input type="text" class="form-control" name="nama_prestasi"></div>
-                    <div class="col-md-3"><label class="form-label">Tahun</label><input type="number" class="form-control" name="tahun_prestasi"></div>
-                    <div class="col-md-3"><label class="form-label">Peringkat</label><input type="text" class="form-control" name="peringkat_prestasi"></div>
-                    <div class="col-md-6"><label class="form-label">Penyelenggara</label><input type="text" class="form-control" name="penyelenggara_prestasi"></div>
-                    
-                    <hr class="my-2">
-                    <div class="col-md-6"><label class="form-label">Jenis Beasiswa</label><select class="form-select" name="jenis_beasiswa"><option>-</option><option>Anak Berprestasi</option><option>Anak Miskin</option><option>Pendidikan</option><option>Unggulan</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Keterangan Beasiswa</label><input type="text" class="form-control" name="keterangan_beasiswa"></div>
-                    <div class="col-md-6"><label class="form-label">Tahun Mulai</label><input type="number" class="form-control" name="tahun_mulai_beasiswa"></div>
-                    <div class="col-md-6"><label class="form-label">Tahun Selesai</label><input type="number" class="form-control" name="tahun_selesai_beasiswa"></div>
-
-                    <hr class="my-2">
-                    <div class="col-md-6"><label class="form-label">Jenis Kesejahteraan (PKH/PIP)</label><select class="form-select" name="jenis_kesejahteraan"><option>-</option><option>PKH</option><option>PIP</option><option>Kartu Perlindungan Sosial</option><option>Kartu Keluarga Sejahtera</option><option>Kartu Kesehatan</option></select></div>
-                    <div class="col-md-6"><label class="form-label">No. Kartu Kesejahteraan</label><input type="text" class="form-control" name="no_kartu_kesejahteraan"></div>
-                    <div class="col-md-6"><label class="form-label">Nama di Kartu</label><input type="text" class="form-control" name="nama_di_kartu"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <button type="button" class="btn btn-secondary btn-nav" onclick="prevStep(5)">&larr; Kembali</button>
-                    <button type="button" class="btn btn-success btn-nav" onclick="nextStep(5)">Lanjut &rarr;</button>
-                </div>
+            <h6 class="text-primary">Kontak & KIP</h6>
+            <div class="row g-3">
+                <div class="col-md-4"><label>Telp Rumah</label><input type="text" class="form-control" name="telp_rumah"></div>
+                <div class="col-md-4"><label>No HP *</label><input type="tel" class="form-control" name="no_hp"></div>
+                <div class="col-md-4"><label>Email</label><input type="email" class="form-control" name="email"></div>
+                <div class="col-md-4"><label>Punya KIP?</label><select class="form-select" name="punya_kip"><option>Tidak</option><option>Ya</option></select></div>
+                <div class="col-md-4"><label>Menerima KIP?</label><select class="form-select" name="menerima_kip"><option>Tidak</option><option>Ya</option></select></div>
+                <div class="col-md-4"><label>Alasan Menolak PIP</label><input type="text" class="form-control" name="alasan_menolak_pip"></div>
             </div>
-
-            <!-- STEP 6: REGISTRASI & KONFIRMASI -->
-            <div class="step" id="step6">
-                <h5 class="section-title">6. Registrasi & Asal Sekolah</h5>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6"><label class="form-label">Kompetensi Keahlian (Khusus SMK)</label><input type="text" class="form-control" name="kompetensi_keahlian"></div>
-                    <div class="col-md-6"><label class="form-label">Jenis Pendaftaran</label><select class="form-select" name="jenis_pendaftaran"><option>Siswa Baru</option><option>Pindahan</option><option>Kembali Bersekolah</option></select></div>
-                    <div class="col-md-6"><label class="form-label">NIS / No Induk PD</label><input type="text" class="form-control" name="nis"></div>
-                    <div class="col-md-6"><label class="form-label">Tanggal Masuk Sekolah</label><input type="date" class="form-control" name="tanggal_masuk_sekolah"></div>
-                    <div class="col-md-6"><label class="form-label">Sekolah Asal</label><input type="text" class="form-control" name="sekolah_asal"></div>
-                    <div class="col-md-6"><label class="form-label">No Peserta UN</label><input type="text" class="form-control" name="no_peserta_un"></div>
-                    <div class="col-md-6"><label class="form-label">No Seri Ijazah</label><input type="text" class="form-control" name="no_seri_ijazah"></div>
-                    <div class="col-md-6"><label class="form-label">No SKHUN</label><input type="text" class="form-control" name="no_skhun"></div>
-                </div>
-
-                <div class="alert alert-warning">
-                    <strong>Perhatian:</strong> Pastikan data yang Anda isi sudah benar, terutama <strong>NIK, No KK, dan Nama Lengkap</strong>. Data yang sudah dikirim tidak dapat diubah sepihak.
-                </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <button type="button" class="btn btn-secondary btn-nav" onclick="prevStep(6)">&larr; Kembali</button>
-                    <button type="submit" class="btn btn-primary btn-nav" id="btnSubmit">
-                        <span class="spinner-border spinner-border-sm d-none" id="loader"></span>
-                        Kirim & Cetak
-                    </button>
-                </div>
+            <div class="d-flex justify-content-between mt-3">
+                <button type="button" class="btn btn-secondary" onclick="go(3)">← Kembali</button>
+                <button type="button" class="btn btn-primary" onclick="go(5)">Lanjut →</button>
             </div>
-        </form>
+        </div>
 
-        <!-- SUKSES -->
-        <div id="successMsg" class="d-none text-center mt-4">
-            <div class="alert alert-success">
-                <h4 class="fw-bold">✅ Data Berhasil Disimpan!</h4>
-                <p>Formulir F-PD Anda telah dicetak oleh sistem.</p>
-                <a href="#" id="pdfLink" target="_blank" class="btn btn-lg btn-success mt-2">📄 Download & Cetak PDF</a>
+        <!-- STEP 5 -->
+        <div class="step" id="s5">
+            <h5 class="judul">Prestasi, Beasiswa & Kesejahteraan</h5>
+            <div class="row g-3">
+                <div class="col-md-6"><label>Jenis Prestasi</label><select class="form-select" name="jenis_prestasi"><option>-</option><option>Sains</option><option>Seni</option><option>Olahraga</option><option>Lain-lain</option></select></div>
+                <div class="col-md-6"><label>Tingkat</label><select class="form-select" name="tingkat_prestasi"><option>-</option><option>Sekolah</option><option>Kecamatan</option><option>Kabupaten</option><option>Provinsi</option><option>Nasional</option><option>Internasional</option></select></div>
+                <div class="col-md-6"><label>Nama Prestasi</label><input type="text" class="form-control" name="nama_prestasi"></div>
+                <div class="col-md-3"><label>Tahun</label><input type="number" class="form-control" name="tahun_prestasi"></div>
+                <div class="col-md-3"><label>Peringkat</label><input type="text" class="form-control" name="peringkat_prestasi"></div>
+                <div class="col-md-6"><label>Penyelenggara</label><input type="text" class="form-control" name="penyelenggara_prestasi"></div>
+                <hr class="my-2">
+                <div class="col-md-6"><label>Jenis Beasiswa</label><select class="form-select" name="jenis_beasiswa"><option>-</option><option>Anak Berprestasi</option><option>Anak Miskin</option><option>Pendidikan</option><option>Unggulan</option></select></div>
+                <div class="col-md-6"><label>Keterangan</label><input type="text" class="form-control" name="keterangan_beasiswa"></div>
+                <div class="col-md-6"><label>Tahun Mulai</label><input type="number" class="form-control" name="tahun_mulai_beasiswa"></div>
+                <div class="col-md-6"><label>Tahun Selesai</label><input type="number" class="form-control" name="tahun_selesai_beasiswa"></div>
+                <hr class="my-2">
+                <div class="col-md-6"><label>Jenis Kesejahteraan</label><select class="form-select" name="jenis_kesejahteraan"><option>-</option><option>PKH</option><option>PIP</option><option>Kartu Perlindungan Sosial</option><option>Kartu Keluarga Sejahtera</option><option>Kartu Kesehatan</option></select></div>
+                <div class="col-md-6"><label>No Kartu</label><input type="text" class="form-control" name="no_kartu_kesejahteraan"></div>
+                <div class="col-md-6"><label>Nama di Kartu</label><input type="text" class="form-control" name="nama_di_kartu"></div>
             </div>
+            <div class="d-flex justify-content-between mt-3">
+                <button type="button" class="btn btn-secondary" onclick="go(4)">← Kembali</button>
+                <button type="button" class="btn btn-primary" onclick="go(6)">Lanjut →</button>
+            </div>
+        </div>
+
+        <!-- STEP 6 -->
+        <div class="step" id="s6">
+            <h5 class="judul">Registrasi & Konfirmasi</h5>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6"><label>Kompetensi Keahlian (SMK)</label><input type="text" class="form-control" name="kompetensi_keahlian"></div>
+                <div class="col-md-6"><label>Jenis Pendaftaran</label><select class="form-select" name="jenis_pendaftaran"><option>Siswa Baru</option><option>Pindahan</option><option>Kembali Bersekolah</option></select></div>
+                <div class="col-md-6"><label>NIS</label><input type="text" class="form-control" name="nis"></div>
+                <div class="col-md-6"><label>Tanggal Masuk</label><input type="date" class="form-control" name="tanggal_masuk_sekolah"></div>
+                <div class="col-md-6"><label>Sekolah Asal</label><input type="text" class="form-control" name="sekolah_asal"></div>
+                <div class="col-md-6"><label>No Peserta UN</label><input type="text" class="form-control" name="no_peserta_un"></div>
+                <div class="col-md-6"><label>No Seri Ijazah</label><input type="text" class="form-control" name="no_seri_ijazah"></div>
+                <div class="col-md-6"><label>No SKHUN</label><input type="text" class="form-control" name="no_skhun"></div>
+            </div>
+            <div class="alert alert-warning"><strong>Perhatian:</strong> Pastikan NIK, No KK, dan Nama sudah benar sesuai Akta/KK.</div>
+            <div class="d-flex justify-content-between mt-3">
+                <button type="button" class="btn btn-secondary" onclick="go(5)">← Kembali</button>
+                <button type="button" class="btn btn-success btn-lg" id="btnKirim" onclick="kirimData()">
+                    📤 Kirim & Cetak Formulir
+                </button>
+            </div>
+        </div>
+
+    </form>
+
+    <div id="hasil" class="d-none text-center mt-4">
+        <div class="alert alert-success">
+            <h4>✅ Berhasil!</h4>
+            <p>Data tersimpan. Klik tombol di bawah untuk mengunduh formulir PDF.</p>
+            <a href="#" id="linkPDF" target="_blank" class="btn btn-lg btn-success">📄 Download & Cetak PDF</a>
         </div>
     </div>
 </div>
+</div>
 
 <script>
-    // GANTI DENGAN URL WEB APP ANDA DARI LANGKAH 1
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyHMAW9WWDpgVwVCT_Zhhe2OLG9BoVts34-WLGtVlgQJY7gGguVQCfks_yUq-J7n40hEg/exec'; 
-    let currentStep = 1;
-    const totalSteps = 6;
+// ===== GANTI DENGAN URL WEB APP ANDA =====
+var API = 'https://script.google.com/macros/s/AKfycbx2Mq9ILj3SzUPu8gpI51XEOFMMt_Ib2peIBt9wjO_ev_OAdFYiFmPmwqO0ab9ZfYIo/exec';
+var step = 1;
 
-    function updateProgress() {
-        document.getElementById('progressBar').style.width = (currentStep / totalSteps * 100) + '%';
-    }
-
-    function nextStep(step) {
-        // Validasi Step 1
-        if(step === 1) {
-            const req = document.querySelectorAll('#step1 [required]');
-            for(let f of req) { if(!f.value.trim()) { alert('Harap isi kolom yang bertanda bintang (*)'); f.focus(); return; } }
+function go(n) {
+    // Validasi step 1
+    if (step === 1 && n > 1) {
+        var nama = document.querySelector('[name="nama_lengkap"]').value.trim();
+        var nik = document.querySelector('[name="nik"]').value.trim();
+        var kk = document.querySelector('[name="no_kk"]').value.trim();
+        var jk = document.querySelector('[name="jenis_kelamin"]').value;
+        var tl = document.querySelector('[name="tempat_lahir"]').value.trim();
+        var tgl = document.querySelector('[name="tanggal_lahir"]').value;
+        if (!nama || !nik || !kk || !jk || !tl || !tgl) {
+            alert('Mohon isi semua field yang bertanda bintang (*) di Data Pribadi.');
+            return;
         }
-        document.getElementById(`step${step}`).classList.remove('active');
-        document.getElementById(`step${step + 1}`).classList.add('active');
-        currentStep++;
-        updateProgress();
-        window.scrollTo(0, 0);
     }
+    document.getElementById('s' + step).classList.remove('active');
+    document.getElementById('s' + n).classList.add('active');
+    step = n;
+    document.getElementById('prog').style.width = (n / 6 * 100) + '%';
+    window.scrollTo(0, 0);
+}
 
-    function prevStep(step) {
-        document.getElementById(`step${step}`).classList.remove('active');
-        document.getElementById(`step${step - 1}`).classList.add('active');
-        currentStep--;
-        updateProgress();
-        window.scrollTo(0, 0);
-    }
+function kirimData() {
+    console.log('Tombol diklik, memulai pengiriman...');
 
-    document.getElementById('fpdForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnSubmit');
-        btn.disabled = true;
-        document.getElementById('loader').classList.remove('d-none');
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...';
+    var btn = document.getElementById('btnKirim');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Memproses... Mohon tunggu...';
 
-        const formData = new FormData(this);
-        const data = {};
-        formData.forEach((val, key) => data[key] = val);
+    // Kumpulkan data
+    var form = document.getElementById('fpdForm');
+    var fd = new FormData(form);
+    var data = {};
+    fd.forEach(function(v, k) { data[k] = v; });
+    console.log('Data yang dikirim:', data);
 
-        // PENTING: Gunakan text/plain untuk menghindari CORS Error di Google Apps Script
-        fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify(data),
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8', 
-            }
-        })
-        .then(res => res.json())
-        .then(result => {
-            if(result.status === 'success') {
-                document.getElementById('fpdForm').classList.add('d-none');
-                document.querySelector('.progress').classList.add('d-none');
-                document.getElementById('successMsg').classList.remove('d-none');
-                document.getElementById('pdfLink').href = result.pdf_url;
-            } else {
-                alert('Error Server: ' + result.message);
-                resetBtn();
-            }
-        })
-        .catch(err => {
-            alert('Gagal terhubung. Pastikan URL API benar dan file HTML dibuka via hosting/localhost (bukan file://).');
-            console.error(err);
-            resetBtn();
-        });
-    });
-
-    function resetBtn() {
-        const btn = document.getElementById('btnSubmit');
+    // Kirim ke Apps Script
+    fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(data)
+    })
+    .then(function(res) {
+        console.log('Response status:', res.status);
+        return res.json();
+    })
+    .then(function(result) {
+        console.log('Hasil:', result);
+        if (result.status === 'success') {
+            document.getElementById('fpdForm').style.display = 'none';
+            document.querySelector('.progress').style.display = 'none';
+            document.getElementById('hasil').classList.remove('d-none');
+            document.getElementById('linkPDF').href = result.pdf_url;
+        } else {
+            alert('Error: ' + result.message);
+            btn.disabled = false;
+            btn.innerHTML = '📤 Kirim & Cetak Formulir';
+        }
+    })
+    .catch(function(err) {
+        console.error('Error fetch:', err);
+        alert('Gagal mengirim data.\n\nKemungkinan penyebab:\n1. URL API belum diganti\n2. File dibuka dari file:// (harus via hosting)\n3. Deploy Apps Script belum di-set ke "Anyone"\n\nCek Console (F12) untuk detail error.');
         btn.disabled = false;
-        document.getElementById('loader').classList.add('d-none');
-        btn.innerHTML = 'Kirim & Cetak';
-    }
+        btn.innerHTML = '📤 Kirim & Cetak Formulir';
+    });
+}
 </script>
 </body>
 </html>
