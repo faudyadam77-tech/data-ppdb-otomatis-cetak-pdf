@@ -14,11 +14,34 @@
     .step-btn.active { background: #1e40af; color: white; }
     .step-btn.done { background: #059669; color: white; }
     input:invalid, select:invalid { border-color: #f87171; }
-    .pdf-only { display: none; }
+    .pdf-only {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 210mm;
+      background: #fff;
+      z-index: -1;
+      visibility: hidden;
+    }
+    #pdf-content.generating {
+      position: absolute;
+      left: 0;
+      top: 0;
+      visibility: visible;
+      z-index: 9999;
+    }
     @media print {
-      body * { visibility: hidden; }
-      #pdf-content, #pdf-content * { visibility: visible; }
-      #pdf-content { position: absolute; left: 0; top: 0; width: 100%; }
+      body > *:not(#pdf-content) { display: none !important; }
+      #pdf-content, #pdf-content * { visibility: visible !important; }
+      #pdf-content {
+        position: static !important;
+        left: auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 12mm 15mm !important;
+        box-shadow: none !important;
+      }
+      @page { size: A4; margin: 10mm; }
     }
     /* PDF styling */
     #pdf-content {
@@ -27,7 +50,7 @@
       line-height: 1.35;
       color: #000;
       background: #fff;
-      padding: 18mm 15mm;
+      padding: 12mm 15mm;
       width: 210mm;
       box-sizing: border-box;
     }
@@ -62,7 +85,8 @@
       <div class="flex gap-2">
         <button id="btn-prev" class="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded-lg text-sm font-medium disabled:opacity-40" disabled>← Sebelumnya</button>
         <button id="btn-next" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium">Berikutnya →</button>
-        <button id="btn-pdf" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-sm font-bold hidden">Cetak / Unduh PDF</button>
+        <button id="btn-print" class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm font-medium hidden" title="Lebih stabil: gunakan Print → Save as PDF">Cetak (Print)</button>
+        <button id="btn-pdf" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-sm font-bold hidden">Unduh PDF</button>
       </div>
     </div>
   </header>
@@ -674,8 +698,15 @@
 
       <!-- ========== STEP 7: PREVIEW ========== -->
       <section class="form-section" data-step="7">
-        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">PREVIEW & UNDUH PDF</h2>
-        <p class="text-sm text-slate-600 mb-4">Periksa data di bawah. Jika sudah benar, klik tombol <strong>Cetak / Unduh PDF</strong> di atas untuk menghasilkan dokumen PDF yang mengikuti struktur formulir resmi.</p>
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">PREVIEW & CETAK / UNDUH PDF</h2>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-900">
+          <p class="font-medium mb-1">Cara menghasilkan PDF (pilih salah satu):</p>
+          <ol class="list-decimal list-inside space-y-1">
+            <li><strong>Cetak (Print)</strong> — disarankan. Akan muncul dialog cetak browser → pilih printer <em>Save as PDF</em> / <em>Microsoft Print to PDF</em> → Save. Cara ini paling stabil.</li>
+            <li><strong>Unduh PDF</strong> — unduh otomatis. Jika file error / tidak bisa dibuka, gunakan cara no. 1.</li>
+          </ol>
+        </div>
+        <p class="text-sm text-slate-600 mb-3">Periksa ringkasan data di bawah. Jika sudah benar, klik salah satu tombol di atas.</p>
         <div id="preview-summary" class="bg-slate-50 rounded-lg p-4 text-sm space-y-1 max-h-96 overflow-y-auto border"></div>
       </section>
     </form>
@@ -765,6 +796,7 @@
       document.getElementById("btn-prev").disabled = n === 0;
       document.getElementById("btn-next").classList.toggle("hidden", n === totalSteps - 1);
       document.getElementById("btn-pdf").classList.toggle("hidden", n !== totalSteps - 1);
+      document.getElementById("btn-print").classList.toggle("hidden", n !== totalSteps - 1);
       if (n === totalSteps - 1) buildPreview();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -978,33 +1010,103 @@
       return html;
     }
 
-    document.getElementById("btn-pdf").addEventListener("click", () => {
+    function preparePDFContent() {
       const d = collectData();
-      if (!d.nama_lengkap) {
+      if (!d.nama_lengkap || d.nama_lengkap === "—") {
         alert("Nama Lengkap wajib diisi.");
         showStep(0);
-        return;
+        return null;
       }
       const content = document.getElementById("pdf-content");
       content.innerHTML = buildPDFContent(d);
-      content.style.display = "block";
+      return { content, d };
+    }
+
+    // Tombol Unduh PDF (html2pdf)
+    document.getElementById("btn-pdf").addEventListener("click", async () => {
+      const prep = preparePDFContent();
+      if (!prep) return;
+      const { content, d } = prep;
+
+      const btn = document.getElementById("btn-pdf");
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Sedang membuat PDF...";
+
+      // Pastikan elemen terlihat sementara untuk rendering (di luar layar)
+      content.classList.add("generating");
+      content.style.visibility = "visible";
+      content.style.left = "0";
+      content.style.top = "0";
+      content.style.zIndex = "9999";
+      content.style.background = "#fff";
+
+      // Tunggu layout selesai
+      await new Promise(r => setTimeout(r, 300));
+
+      const filename = `Formulir_Peserta_Didik_${(d.nama_lengkap || "siswa").replace(/[^\w\s-]/g, "").replace(/\s+/g, "_")}.pdf`;
 
       const opt = {
-        margin: [8, 8, 8, 8],
-        filename: `Formulir_Peserta_Didik_${(d.nama_lengkap || "siswa").replace(/\s+/g, "_")}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] }
+        margin:       [10, 10, 10, 10],
+        filename:     filename,
+        image:        { type: "jpeg", quality: 0.95 },
+        html2canvas:  {
+          scale: 1.5,
+          useCORS: true,
+          logging: false,
+          letterRendering: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          windowWidth: 794,   // ~A4 width in px at 96dpi
+          scrollX: 0,
+          scrollY: 0
+        },
+        jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak:    { mode: ["css", "legacy"], avoid: [".field", ".sig-box", "table", "tr"] }
       };
 
-      html2pdf().set(opt).from(content).save().then(() => {
-        content.style.display = "none";
-      }).catch(err => {
-        console.error(err);
-        content.style.display = "none";
-        alert("Gagal membuat PDF. Coba gunakan browser Chrome/Edge terbaru.");
-      });
+      try {
+        await html2pdf().set(opt).from(content).save();
+      } catch (err) {
+        console.error("html2pdf error:", err);
+        alert("Gagal membuat PDF otomatis.\n\nSilakan gunakan tombol \"Cetak (Print)\" lalu pilih \"Save as PDF\" / \"Microsoft Print to PDF\". Cara ini hampir selalu berhasil.");
+      } finally {
+        content.classList.remove("generating");
+        content.style.visibility = "hidden";
+        content.style.left = "-9999px";
+        content.style.zIndex = "-1";
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+
+    // Tombol Cetak via Browser (lebih stabil)
+    document.getElementById("btn-print").addEventListener("click", () => {
+      const prep = preparePDFContent();
+      if (!prep) return;
+      const { content } = prep;
+
+      content.classList.add("generating");
+      content.style.visibility = "visible";
+      content.style.left = "0";
+      content.style.top = "0";
+      content.style.position = "absolute";
+      content.style.zIndex = "9999";
+      content.style.background = "#fff";
+      content.style.width = "210mm";
+
+      // Tunggu sebentar agar browser render
+      setTimeout(() => {
+        window.print();
+        // Kembalikan setelah dialog print ditutup
+        setTimeout(() => {
+          content.classList.remove("generating");
+          content.style.visibility = "hidden";
+          content.style.left = "-9999px";
+          content.style.position = "fixed";
+          content.style.zIndex = "-1";
+        }, 1000);
+      }, 400);
     });
   </script>
 </body>
