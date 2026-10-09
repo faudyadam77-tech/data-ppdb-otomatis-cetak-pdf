@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulir Peserta Didik (F-PD) — Pengisian Online</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+    .step-btn.active { background: #1e40af; color: white; }
+    .step-btn.done { background: #059669; color: white; }
+    input:invalid, select:invalid { border-color: #f87171; }
+    .pdf-only {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 210mm;
+      background: #fff;
+      z-index: -1;
+      visibility: hidden;
+    }
+    #pdf-content.generating {
+      position: absolute;
+      left: 0;
+      top: 0;
+      visibility: visible;
+      z-index: 9999;
+    }
+    @media print {
+      body > *:not(#pdf-content) { display: none !important; }
+      #pdf-content, #pdf-content * { visibility: visible !important; }
+      #pdf-content {
+        position: static !important;
+        left: auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 12mm 15mm !important;
+        box-shadow: none !important;
+      }
+      @page { size: A4; margin: 10mm; }
+    }
+    /* PDF styling */
+    #pdf-content {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      line-height: 1.35;
+      color: #000;
+      background: #fff;
+      padding: 12mm 15mm;
+      width: 210mm;
+      box-sizing: border-box;
+    }
+    #pdf-content h1 { font-size: 16pt; text-align: center; font-weight: bold; margin: 0 0 2pt; }
+    #pdf-content .subtitle { text-align: center; font-size: 11pt; margin-bottom: 8pt; }
+    #pdf-content .section-title {
+      font-weight: bold; font-size: 12pt; margin-top: 12pt; margin-bottom: 6pt;
+      border-bottom: 1.5px solid #000; padding-bottom: 2pt;
+    }
+    #pdf-content .field { margin-bottom: 3pt; display: flex; flex-wrap: wrap; align-items: baseline; }
+    #pdf-content .num { display: inline-block; width: 22px; font-weight: bold; flex-shrink: 0; }
+    #pdf-content .label { font-weight: 600; min-width: 140px; }
+    #pdf-content .value { border-bottom: 1px dotted #333; min-width: 180px; padding: 0 4px; flex: 1; }
+    #pdf-content .help { font-size: 8.5pt; color: #333; margin: 1pt 0 4pt 22px; font-style: italic; }
+    #pdf-content table { width: 100%; border-collapse: collapse; margin: 6pt 0; font-size: 10pt; }
+    #pdf-content th, #pdf-content td { border: 1px solid #000; padding: 3pt 5pt; text-align: left; }
+    #pdf-content th { background: #f0f0f0; font-weight: bold; }
+    #pdf-content .sig-box { display: flex; justify-content: space-between; margin-top: 28pt; }
+    #pdf-content .sig { text-align: center; width: 45%; }
+    #pdf-content .sig .line { border-top: 1px solid #000; margin-top: 50pt; padding-top: 3pt; }
+    .checkbox-group label { display: inline-flex; align-items: center; margin-right: 10px; margin-bottom: 4px; font-size: 0.875rem; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+  <!-- HEADER -->
+  <header class="bg-blue-900 text-white shadow-lg">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-bold">Formulir Peserta Didik (F-PD)</h1>
+        <p class="text-blue-200 text-sm">Pengisian Online — Hasil PDF mirip dokumen resmi</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="btn-prev" class="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded-lg text-sm font-medium disabled:opacity-40" disabled>← Sebelumnya</button>
+        <button id="btn-next" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium">Berikutnya →</button>
+        <button id="btn-print" class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm font-medium hidden" title="Lebih stabil: gunakan Print → Save as PDF">Cetak (Print)</button>
+        <button id="btn-pdf" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg text-sm font-bold hidden">Unduh PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- PROGRESS STEPS -->
+  <div class="max-w-5xl mx-auto px-4 py-3">
+    <div class="flex flex-wrap gap-1 text-xs font-medium" id="step-indicators">
+      <button class="step-btn active px-3 py-1.5 rounded-full bg-slate-300" data-step="0">1. Pribadi</button>
+      <button class="step-btn px-3 py-1.5 rounded-full bg-slate-300" data-step="1">2. Alamat & Lainnya</button>
+      <button class="step-btn px-3 py-1.5 rounded-full bg-slate-300" data-step="2">3. Ayah</button>
+      <button class="step-btn px-3 py-1.5 rounded-full bg-slate-300" data-step="3">4. Ibu</button>
+      <button class="step-btn px-3 py-1.5 rounded-full bg-slate-300" data-step="4">5. Wali & Kontak</button>
+      <button class="step-btn px-3 py-1.5 rounded-full bg-slate-300" data-step="5">6. Periodik & Prestasi</button>
+      <button class="step-btn px-3 py-1.5 rounded-full bg-slate-300" data-step="6">7. Registrasi</button>
+      <button class="step-btn px-3 py-1.5 rounded-full bg-slate-300" data-step="7">8. Preview & PDF</button>
+    </div>
+  </div>
+
+  <main class="max-w-5xl mx-auto px-4 pb-16">
+    <form id="main-form" class="bg-white rounded-xl shadow-md p-6 space-y-4">
+
+      <!-- ========== STEP 0: DATA PRIBADI ========== -->
+      <section class="form-section active" data-step="0">
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">DATA PRIBADI</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">1. Nama Lengkap <span class="text-red-500">*</span></label>
+            <input type="text" name="nama_lengkap" required class="w-full border rounded-lg px-3 py-2" placeholder="Sesuai Akta / Ijazah sebelumnya" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">2. Jenis Kelamin <span class="text-red-500">*</span></label>
+            <select name="jenis_kelamin" required class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="Laki-laki">Laki-laki</option>
+              <option value="Perempuan">Perempuan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">3. NISN</label>
+            <input type="text" name="nisn" maxlength="10" pattern="[0-9]{10}" class="w-full border rounded-lg px-3 py-2" placeholder="10 digit (kosongkan jika belum punya)" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">4. NIK / No. KITAS</label>
+            <input type="text" name="nik" maxlength="20" class="w-full border rounded-lg px-3 py-2" placeholder="16 digit NIK atau nomor KITAS" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">5. No. KK</label>
+            <input type="text" name="no_kk" maxlength="16" class="w-full border rounded-lg px-3 py-2" placeholder="Nomor Kartu Keluarga" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">6. Tempat Lahir</label>
+            <input type="text" name="tempat_lahir" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">7. Tanggal Lahir</label>
+            <input type="date" name="tanggal_lahir" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">8. No. Registrasi Akta Lahir</label>
+            <input type="text" name="no_akta" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">9. Agama & Kepercayaan</label>
+            <select name="agama" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Islam">01) Islam</option>
+              <option value="02) Kristen/Protestan">02) Kristen/Protestan</option>
+              <option value="03) Katholik">03) Katholik</option>
+              <option value="04) Hindu">04) Hindu</option>
+              <option value="05) Budha">05) Budha</option>
+              <option value="06) Khonghucu">06) Khonghucu</option>
+              <option value="07) Kepercayaan Kepada Tuhan YME">07) Kepercayaan Kepada Tuhan YME</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">10. Kewarganegaraan</label>
+            <select name="kewarganegaraan" id="kewarganegaraan" class="w-full border rounded-lg px-3 py-2">
+              <option value="Indonesia (WNI)">Indonesia (WNI)</option>
+              <option value="Asing (WNA)">Asing (WNA)</option>
+            </select>
+          </div>
+          <div id="nama-negara-wrap" class="hidden">
+            <label class="block text-sm font-medium mb-1">Nama Negara</label>
+            <input type="text" name="nama_negara" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+        </div>
+        <div class="mt-4">
+          <label class="block text-sm font-medium mb-2">11. Berkebutuhan Khusus (boleh lebih dari satu)</label>
+          <div class="checkbox-group grid grid-cols-2 md:grid-cols-3 gap-1" id="bk_pribadi"></div>
+        </div>
+      </section>
+
+      <!-- ========== STEP 1: ALAMAT & LAINNYA ========== -->
+      <section class="form-section" data-step="1">
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">ALAMAT & DATA TAMBAHAN</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">12. Alamat Jalan</label>
+            <textarea name="alamat_jalan" rows="2" class="w-full border rounded-lg px-3 py-2" placeholder="Jl. ..., Komp. ..., No. ..."></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">13. RT</label>
+            <input type="text" name="rt" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">14. RW</label>
+            <input type="text" name="rw" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">15. Nama Dusun</label>
+            <input type="text" name="dusun" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">16. Nama Kelurahan / Desa</label>
+            <input type="text" name="kelurahan" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">17. Kecamatan</label>
+            <input type="text" name="kecamatan" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">18. Kode Pos</label>
+            <input type="text" name="kode_pos" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">19. Lintang</label>
+            <input type="text" name="lintang" class="w-full border rounded-lg px-3 py-2" placeholder="Titik koordinat" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">20. Bujur</label>
+            <input type="text" name="bujur" class="w-full border rounded-lg px-3 py-2" placeholder="Titik koordinat" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">21. Tempat Tinggal</label>
+            <select name="tempat_tinggal" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Bersama orang tua">01) Bersama orang tua</option>
+              <option value="02) Wali">02) Wali</option>
+              <option value="03) Kos">03) Kos</option>
+              <option value="04) Asrama">04) Asrama</option>
+              <option value="05) Panti Asuhan">05) Panti Asuhan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">22. Moda Transportasi</label>
+            <select name="moda_transportasi" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Jalan kaki">01) Jalan kaki</option>
+              <option value="02) Kendaraan pribadi">02) Kendaraan pribadi</option>
+              <option value="03) Kendaraan Umum/angkot/Pete-pete">03) Kendaraan Umum/angkot/Pete-pete</option>
+              <option value="04) Jemputan Sekolah">04) Jemputan Sekolah</option>
+              <option value="05) Kereta Api">05) Kereta Api</option>
+              <option value="06) Ojek">06) Ojek</option>
+              <option value="07) Andong/Bendi/Sado/Dokar/Delman/Becak">07) Andong/Bendi/Sado/Dokar/Delman/Becak</option>
+              <option value="08) Perahu penyeberangan/Rakit/Getek">08) Perahu penyeberangan/Rakit/Getek</option>
+              <option value="99) Lainnya">99) Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">23. Anak keberapa</label>
+            <input type="number" name="anak_ke" min="1" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">24. Pekerjaan (Warga Belajar)</label>
+            <select name="pekerjaan_pd" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Tidak bekerja">01) Tidak bekerja</option>
+              <option value="02) Nelayan">02) Nelayan</option>
+              <option value="03) Petani">03) Petani</option>
+              <option value="04) Peternak">04) Peternak</option>
+              <option value="05) PNS/TNI/POLRI">05) PNS/TNI/POLRI</option>
+              <option value="06) Karyawan Swasta">06) Karyawan Swasta</option>
+              <option value="07) Pedagang Kecil">07) Pedagang Kecil</option>
+              <option value="08) Pedagang Besar">08) Pedagang Besar</option>
+              <option value="09) Wiraswasta">09) Wiraswasta</option>
+              <option value="10) Wirausaha">10) Wirausaha</option>
+              <option value="11) Buruh">11) Buruh</option>
+              <option value="12) Pensiunan">12) Pensiunan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">25. Apakah punya KIP?</label>
+            <select name="punya_kip" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="Ya">Ya</option>
+              <option value="Tidak">Tidak</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">26. Tetap akan menerima KIP?</label>
+            <select name="terima_kip" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="Ya">Ya</option>
+              <option value="Tidak">Tidak</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">27. Alasan menolak PIP</label>
+            <select name="alasan_tolak_pip" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih (jika relevan) —</option>
+              <option value="01) Dilarang pemda karena menerima bantuan serupa">01) Dilarang pemda karena menerima bantuan serupa</option>
+              <option value="02) Menolak">02) Menolak</option>
+              <option value="03) Sudah mampu">03) Sudah mampu</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== STEP 2: DATA AYAH ========== -->
+      <section class="form-section" data-step="2">
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">DATA AYAH KANDUNG</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">28. Nama Ayah Kandung</label>
+            <input type="text" name="nama_ayah" class="w-full border rounded-lg px-3 py-2" placeholder="Tanpa gelar" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">29. NIK Ayah</label>
+            <input type="text" name="nik_ayah" maxlength="16" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">30. Tahun Lahir</label>
+            <input type="number" name="tahun_lahir_ayah" min="1940" max="2010" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">31. Pendidikan</label>
+            <select name="pendidikan_ayah" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Tidak sekolah">01) Tidak sekolah</option>
+              <option value="02) Putus SD">02) Putus SD</option>
+              <option value="03) SD Sederajat">03) SD Sederajat</option>
+              <option value="04) SMP Sederajat">04) SMP Sederajat</option>
+              <option value="05) SMA Sederajat">05) SMA Sederajat</option>
+              <option value="06) D1">06) D1</option>
+              <option value="07) D2">07) D2</option>
+              <option value="08) D3">08) D3</option>
+              <option value="09) D4/S1">09) D4/S1</option>
+              <option value="10) S2">10) S2</option>
+              <option value="11) S3">11) S3</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">32. Pekerjaan</label>
+            <select name="pekerjaan_ayah" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Tidak bekerja">01) Tidak bekerja</option>
+              <option value="02) Nelayan">02) Nelayan</option>
+              <option value="03) Petani">03) Petani</option>
+              <option value="04) Peternak">04) Peternak</option>
+              <option value="05) PNS/TNI/POLRI">05) PNS/TNI/POLRI</option>
+              <option value="06) Karyawan Swasta">06) Karyawan Swasta</option>
+              <option value="07) Pedagang Kecil">07) Pedagang Kecil</option>
+              <option value="08) Pedagang Besar">08) Pedagang Besar</option>
+              <option value="09) Wiraswasta">09) Wiraswasta</option>
+              <option value="10) Wirausaha">10) Wirausaha</option>
+              <option value="11) Buruh">11) Buruh</option>
+              <option value="12) Pensiunan">12) Pensiunan</option>
+              <option value="Meninggal Dunia">Meninggal Dunia</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">33. Penghasilan Bulanan</label>
+            <select name="penghasilan_ayah" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) &lt; Rp. 500.000">01) &lt; Rp. 500.000</option>
+              <option value="02) Rp. 500.000 – Rp. 999.999">02) Rp. 500.000 – Rp. 999.999</option>
+              <option value="03) Rp. 1.000.000 – Rp. 1.999.999">03) Rp. 1.000.000 – Rp. 1.999.999</option>
+              <option value="04) Rp. 2.000.000 – Rp. 4.999.999">04) Rp. 2.000.000 – Rp. 4.999.999</option>
+              <option value="05) Rp. 5.000.000 – Rp. 20.000.000">05) Rp. 5.000.000 – Rp. 20.000.000</option>
+              <option value="06) &gt; Rp. 20.000.000">06) &gt; Rp. 20.000.000</option>
+              <option value="07) Tidak Berpenghasilan">07) Tidak Berpenghasilan</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-4">
+          <label class="block text-sm font-medium mb-2">34. Berkebutuhan Khusus Ayah</label>
+          <div class="checkbox-group grid grid-cols-2 md:grid-cols-3 gap-1" id="bk_ayah"></div>
+        </div>
+      </section>
+
+      <!-- ========== STEP 3: DATA IBU ========== -->
+      <section class="form-section" data-step="3">
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">DATA IBU KANDUNG</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">35. Nama Ibu Kandung</label>
+            <input type="text" name="nama_ibu" class="w-full border rounded-lg px-3 py-2" placeholder="Tanpa gelar" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">36. NIK Ibu</label>
+            <input type="text" name="nik_ibu" maxlength="16" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">37. Tahun Lahir</label>
+            <input type="number" name="tahun_lahir_ibu" min="1940" max="2010" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">38. Pendidikan</label>
+            <select name="pendidikan_ibu" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Tidak sekolah">01) Tidak sekolah</option>
+              <option value="02) Putus SD">02) Putus SD</option>
+              <option value="03) SD Sederajat">03) SD Sederajat</option>
+              <option value="04) SMP Sederajat">04) SMP Sederajat</option>
+              <option value="05) SMA Sederajat">05) SMA Sederajat</option>
+              <option value="06) D1">06) D1</option>
+              <option value="07) D2">07) D2</option>
+              <option value="08) D3">08) D3</option>
+              <option value="09) D4/S1">09) D4/S1</option>
+              <option value="10) S2">10) S2</option>
+              <option value="11) S3">11) S3</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">39. Pekerjaan</label>
+            <select name="pekerjaan_ibu" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Tidak bekerja">01) Tidak bekerja</option>
+              <option value="02) Nelayan">02) Nelayan</option>
+              <option value="03) Petani">03) Petani</option>
+              <option value="04) Peternak">04) Peternak</option>
+              <option value="05) PNS/TNI/POLRI">05) PNS/TNI/POLRI</option>
+              <option value="06) Karyawan Swasta">06) Karyawan Swasta</option>
+              <option value="07) Pedagang Kecil">07) Pedagang Kecil</option>
+              <option value="08) Pedagang Besar">08) Pedagang Besar</option>
+              <option value="09) Wiraswasta">09) Wiraswasta</option>
+              <option value="10) Wirausaha">10) Wirausaha</option>
+              <option value="11) Buruh">11) Buruh</option>
+              <option value="12) Pensiunan">12) Pensiunan</option>
+              <option value="Meninggal Dunia">Meninggal Dunia</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">40. Penghasilan Bulanan</label>
+            <select name="penghasilan_ibu" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) &lt; Rp. 500.000">01) &lt; Rp. 500.000</option>
+              <option value="02) Rp. 500.000 – Rp. 999.999">02) Rp. 500.000 – Rp. 999.999</option>
+              <option value="03) Rp. 1.000.000 – Rp. 1.999.999">03) Rp. 1.000.000 – Rp. 1.999.999</option>
+              <option value="04) Rp. 2.000.000 – Rp. 4.999.999">04) Rp. 2.000.000 – Rp. 4.999.999</option>
+              <option value="05) Rp. 5.000.000 – Rp. 20.000.000">05) Rp. 5.000.000 – Rp. 20.000.000</option>
+              <option value="06) &gt; Rp. 20.000.000">06) &gt; Rp. 20.000.000</option>
+              <option value="07) Tidak Berpenghasilan">07) Tidak Berpenghasilan</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-4">
+          <label class="block text-sm font-medium mb-2">41. Berkebutuhan Khusus Ibu</label>
+          <div class="checkbox-group grid grid-cols-2 md:grid-cols-3 gap-1" id="bk_ibu"></div>
+        </div>
+      </section>
+
+      <!-- ========== STEP 4: WALI & KONTAK ========== -->
+      <section class="form-section" data-step="4">
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">DATA WALI</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">42. Nama Wali</label>
+            <input type="text" name="nama_wali" class="w-full border rounded-lg px-3 py-2" placeholder="Kosongkan jika tidak ada wali" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">43. NIK Wali</label>
+            <input type="text" name="nik_wali" maxlength="16" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">44. Tahun Lahir</label>
+            <input type="number" name="tahun_lahir_wali" min="1940" max="2010" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">45. Pendidikan</label>
+            <select name="pendidikan_wali" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Tidak sekolah">01) Tidak sekolah</option>
+              <option value="02) Putus SD">02) Putus SD</option>
+              <option value="03) SD Sederajat">03) SD Sederajat</option>
+              <option value="04) SMP Sederajat">04) SMP Sederajat</option>
+              <option value="05) SMA Sederajat">05) SMA Sederajat</option>
+              <option value="06) D1">06) D1</option>
+              <option value="07) D2">07) D2</option>
+              <option value="08) D3">08) D3</option>
+              <option value="09) D4/S1">09) D4/S1</option>
+              <option value="10) S2">10) S2</option>
+              <option value="11) S3">11) S3</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">46. Pekerjaan</label>
+            <select name="pekerjaan_wali" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Tidak bekerja">01) Tidak bekerja</option>
+              <option value="02) Nelayan">02) Nelayan</option>
+              <option value="03) Petani">03) Petani</option>
+              <option value="04) Peternak">04) Peternak</option>
+              <option value="05) PNS/TNI/POLRI">05) PNS/TNI/POLRI</option>
+              <option value="06) Karyawan Swasta">06) Karyawan Swasta</option>
+              <option value="07) Pedagang Kecil">07) Pedagang Kecil</option>
+              <option value="08) Pedagang Besar">08) Pedagang Besar</option>
+              <option value="09) Wiraswasta">09) Wiraswasta</option>
+              <option value="10) Wirausaha">10) Wirausaha</option>
+              <option value="11) Buruh">11) Buruh</option>
+              <option value="12) Pensiunan">12) Pensiunan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">47. Penghasilan Bulanan</label>
+            <select name="penghasilan_wali" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) &lt; Rp. 500.000">01) &lt; Rp. 500.000</option>
+              <option value="02) Rp. 500.000 – Rp. 999.999">02) Rp. 500.000 – Rp. 999.999</option>
+              <option value="03) Rp. 1.000.000 – Rp. 1.999.999">03) Rp. 1.000.000 – Rp. 1.999.999</option>
+              <option value="04) Rp. 2.000.000 – Rp. 4.999.999">04) Rp. 2.000.000 – Rp. 4.999.999</option>
+              <option value="05) Rp. 5.000.000 – Rp. 20.000.000">05) Rp. 5.000.000 – Rp. 20.000.000</option>
+              <option value="06) &gt; Rp. 20.000.000">06) &gt; Rp. 20.000.000</option>
+              <option value="07) Tidak Berpenghasilan">07) Tidak Berpenghasilan</option>
+            </select>
+          </div>
+        </div>
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4 mt-8">KONTAK</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">48. Nomor Telepon Rumah</label>
+            <input type="text" name="telp_rumah" class="w-full border rounded-lg px-3 py-2" placeholder="Tanpa tanda baca" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">49. Nomor HP</label>
+            <input type="text" name="no_hp" class="w-full border rounded-lg px-3 py-2" placeholder="Tanpa tanda baca" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">50. Email</label>
+            <input type="email" name="email" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== STEP 5: PERIODIK, PRESTASI, BEASISWA, KESEJAHTERAAN ========== -->
+      <section class="form-section" data-step="5">
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">DATA PERIODIK</h2>
+        <div class="grid md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Tinggi Badan (cm)</label>
+            <input type="number" name="tinggi_badan" min="50" max="250" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Berat Badan (Kg)</label>
+            <input type="number" name="berat_badan" min="10" max="200" step="0.1" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Lingkar Kepala (cm)</label>
+            <input type="number" name="lingkar_kepala" min="20" max="80" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Jarak ke Sekolah</label>
+            <select name="jarak_sekolah" id="jarak_sekolah" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="Kurang dari 1 km">Kurang dari 1 km</option>
+              <option value="Lebih dari 1 km">Lebih dari 1 km</option>
+            </select>
+          </div>
+          <div id="jarak-km-wrap" class="hidden">
+            <label class="block text-sm font-medium mb-1">Sebutkan (km)</label>
+            <input type="number" name="jarak_km" min="1" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Waktu Tempuh (Jam)</label>
+            <input type="number" name="waktu_jam" min="0" max="12" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Waktu Tempuh (Menit)</label>
+            <input type="number" name="waktu_menit" min="0" max="59" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Jumlah Saudara Kandung</label>
+            <input type="number" name="saudara_kandung" min="0" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+        </div>
+
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4 mt-8">PRESTASI (opsional, isi hingga 3)</h2>
+        <div id="prestasi-list" class="space-y-4"></div>
+        <button type="button" id="add-prestasi" class="mt-2 text-sm text-blue-700 hover:underline">+ Tambah Prestasi</button>
+
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4 mt-8">BEASISWA (opsional)</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Jenis Beasiswa</label>
+            <select name="jenis_beasiswa" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Anak berprestasi">01) Anak berprestasi</option>
+              <option value="02) Anak Miskin">02) Anak Miskin</option>
+              <option value="03) Pendidikan">03) Pendidikan</option>
+              <option value="04) Unggulan">04) Unggulan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Keterangan</label>
+            <input type="text" name="ket_beasiswa" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Tahun Mulai</label>
+            <input type="number" name="tahun_mulai_beasiswa" min="2000" max="2030" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Tahun Selesai</label>
+            <input type="number" name="tahun_selesai_beasiswa" min="2000" max="2030" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+        </div>
+
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4 mt-8">KESEJAHTERAAN PESERTA DIDIK</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Jenis Kesejahteraan</label>
+            <select name="jenis_kesejahteraan" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) PKH">01) PKH</option>
+              <option value="02) PIP">02) PIP</option>
+              <option value="03) Kartu Perlindungan Sosial">03) Kartu Perlindungan Sosial</option>
+              <option value="04) Kartu Keluarga Sejahtera">04) Kartu Keluarga Sejahtera</option>
+              <option value="05) Kartu Kesehatan">05) Kartu Kesehatan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">No. Kartu</label>
+            <input type="text" name="no_kartu_kesejahteraan" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">Nama di Kartu</label>
+            <input type="text" name="nama_di_kartu" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== STEP 6: REGISTRASI ========== -->
+      <section class="form-section" data-step="6">
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">REGISTRASI PESERTA DIDIK</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">1. Kompetensi Keahlian (khusus SMK)</label>
+            <input type="text" name="kompetensi_keahlian" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">2. Jenis Pendaftaran</label>
+            <select name="jenis_pendaftaran" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Pilih —</option>
+              <option value="01) Siswa Baru">01) Siswa Baru</option>
+              <option value="02) Pindahan">02) Pindahan</option>
+              <option value="03) Kembali Bersekolah">03) Kembali Bersekolah</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">3. NIS / Nomor Induk PD</label>
+            <input type="text" name="nis" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">4. Tanggal Masuk Sekolah</label>
+            <input type="date" name="tanggal_masuk" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">5. Sekolah Asal</label>
+            <input type="text" name="sekolah_asal" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">6. Nomor Peserta UN SMP/MTs</label>
+            <input type="text" name="no_un" class="w-full border rounded-lg px-3 py-2" placeholder="20 digit atau Luar Negeri" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">7. No. Seri Ijazah SMP/MTs</label>
+            <input type="text" name="no_ijazah" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">8. No. SKHUN SMP/MTs</label>
+            <input type="text" name="no_skhun" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+        </div>
+
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4 mt-8">PENDAFTARAN KELUAR (opsional)</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Keluar Karena</label>
+            <select name="keluar_karena" class="w-full border rounded-lg px-3 py-2">
+              <option value="">— Tidak keluar —</option>
+              <option value="01) Mutasi">01) Mutasi</option>
+              <option value="02) Dikeluarkan">02) Dikeluarkan</option>
+              <option value="03) Mengundurkan Diri">03) Mengundurkan Diri</option>
+              <option value="04) Putus Sekolah">04) Putus Sekolah</option>
+              <option value="05) Wafat">05) Wafat</option>
+              <option value="06) Hilang">06) Hilang</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Tanggal Keluar</label>
+            <input type="date" name="tanggal_keluar" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">Alasan</label>
+            <input type="text" name="alasan_keluar" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+        </div>
+
+        <div class="mt-6 grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Tanggal Pengisian Formulir</label>
+            <input type="date" name="tanggal_formulir" id="tanggal_formulir" class="w-full border rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Tempat (untuk tanda tangan)</label>
+            <input type="text" name="tempat_ttd" class="w-full border rounded-lg px-3 py-2" placeholder="Contoh: Jakarta" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== STEP 7: PREVIEW ========== -->
+      <section class="form-section" data-step="7">
+        <h2 class="text-lg font-bold text-blue-900 border-b pb-2 mb-4">PREVIEW & CETAK / UNDUH PDF</h2>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-900">
+          <p class="font-medium mb-1">Cara menghasilkan PDF (pilih salah satu):</p>
+          <ol class="list-decimal list-inside space-y-1">
+            <li><strong>Cetak (Print)</strong> — disarankan. Akan muncul dialog cetak browser → pilih printer <em>Save as PDF</em> / <em>Microsoft Print to PDF</em> → Save. Cara ini paling stabil.</li>
+            <li><strong>Unduh PDF</strong> — unduh otomatis. Jika file error / tidak bisa dibuka, gunakan cara no. 1.</li>
+          </ol>
+        </div>
+        <p class="text-sm text-slate-600 mb-3">Periksa ringkasan data di bawah. Jika sudah benar, klik salah satu tombol di atas.</p>
+        <div id="preview-summary" class="bg-slate-50 rounded-lg p-4 text-sm space-y-1 max-h-96 overflow-y-auto border"></div>
+      </section>
+    </form>
+  </main>
+
+  <!-- PDF CONTENT (hidden, used for generation) -->
+  <div id="pdf-content" class="pdf-only"></div>
+
+  <script>
+    // ========== OPTIONS ==========
+    const BK_OPTIONS = [
+      "01) Tidak", "02) Netra (A)", "03) Rungu (B)", "04) Grahita ringan (C)", "05) Grahita Sedang (C1)",
+      "06) Daksa Ringan (D)", "07) Daksa Sedang (D1)", "08) ", "09) Wicara (F)", "10) Tunaganda (G)",
+      "11) Hiper aktif (H)", "12) Cerdas Istimewa (I)", "13) Bakat Istimewa (J)", "14) Kesulitan Belajar (K)",
+      "15) Narkoba (N)", "16) Indigo (O)", "17) Down Syndrome (P)", "18) Autis (Q)"
+    ];
+
+    const PRESTASI_JENIS = ["1) Sains", "2) Seni", "3) Olahraga", "4) Lain-lain"];
+    const PRESTASI_TINGKAT = ["1) Sekolah", "2) Kecamatan", "3) Kabupaten", "4) Provinsi", "5) Nasional", "6) Internasional"];
+
+    // ========== HELPERS ==========
+    function fillCheckboxes(containerId, name) {
+      const el = document.getElementById(containerId);
+      el.innerHTML = BK_OPTIONS.filter(o => o.trim() !== "08) ").map(opt => {
+        const id = name + "_" + opt.replace(/[^a-z0-9]/gi, "_");
+        return `<label><input type="checkbox" name="${name}" value="${opt}" class="mr-1.5 rounded" /> ${opt}</label>`;
+      }).join("");
+    }
+    fillCheckboxes("bk_pribadi", "bk_pribadi");
+    fillCheckboxes("bk_ayah", "bk_ayah");
+    fillCheckboxes("bk_ibu", "bk_ibu");
+
+    // Kewarganegaraan toggle
+    document.getElementById("kewarganegaraan").addEventListener("change", e => {
+      document.getElementById("nama-negara-wrap").classList.toggle("hidden", e.target.value !== "Asing (WNA)");
+    });
+    document.getElementById("jarak_sekolah").addEventListener("change", e => {
+      document.getElementById("jarak-km-wrap").classList.toggle("hidden", e.target.value !== "Lebih dari 1 km");
+    });
+
+    // Prestasi dynamic
+    let prestasiCount = 0;
+    function addPrestasi() {
+      if (prestasiCount >= 3) return;
+      prestasiCount++;
+      const div = document.createElement("div");
+      div.className = "border rounded-lg p-3 bg-slate-50 grid md:grid-cols-2 gap-3";
+      div.innerHTML = `
+        <div><label class="text-xs font-medium">Jenis</label>
+          <select name="prestasi_jenis_${prestasiCount}" class="w-full border rounded px-2 py-1.5 text-sm">
+            <option value="">—</option>${PRESTASI_JENIS.map(j => `<option>${j}</option>`).join("")}
+          </select></div>
+        <div><label class="text-xs font-medium">Tingkat</label>
+          <select name="prestasi_tingkat_${prestasiCount}" class="w-full border rounded px-2 py-1.5 text-sm">
+            <option value="">—</option>${PRESTASI_TINGKAT.map(j => `<option>${j}</option>`).join("")}
+          </select></div>
+        <div class="md:col-span-2"><label class="text-xs font-medium">Nama Prestasi</label>
+          <input type="text" name="prestasi_nama_${prestasiCount}" class="w-full border rounded px-2 py-1.5 text-sm" /></div>
+        <div><label class="text-xs font-medium">Tahun</label>
+          <input type="number" name="prestasi_tahun_${prestasiCount}" class="w-full border rounded px-2 py-1.5 text-sm" /></div>
+        <div><label class="text-xs font-medium">Penyelenggara</label>
+          <input type="text" name="prestasi_penyelenggara_${prestasiCount}" class="w-full border rounded px-2 py-1.5 text-sm" /></div>
+        <div><label class="text-xs font-medium">Peringkat</label>
+          <input type="text" name="prestasi_peringkat_${prestasiCount}" class="w-full border rounded px-2 py-1.5 text-sm" /></div>
+      `;
+      document.getElementById("prestasi-list").appendChild(div);
+    }
+    document.getElementById("add-prestasi").addEventListener("click", addPrestasi);
+    addPrestasi(); // start with 1
+
+    // Default date
+    document.getElementById("tanggal_formulir").valueAsDate = new Date();
+
+    // ========== STEP NAVIGATION ==========
+    let currentStep = 0;
+    const totalSteps = 8;
+    const form = document.getElementById("main-form");
+
+    function showStep(n) {
+      currentStep = n;
+      document.querySelectorAll(".form-section").forEach(s => s.classList.toggle("active", +s.dataset.step === n));
+      document.querySelectorAll(".step-btn").forEach(b => {
+        const s = +b.dataset.step;
+        b.classList.toggle("active", s === n);
+        b.classList.toggle("done", s < n);
+      });
+      document.getElementById("btn-prev").disabled = n === 0;
+      document.getElementById("btn-next").classList.toggle("hidden", n === totalSteps - 1);
+      document.getElementById("btn-pdf").classList.toggle("hidden", n !== totalSteps - 1);
+      document.getElementById("btn-print").classList.toggle("hidden", n !== totalSteps - 1);
+      if (n === totalSteps - 1) buildPreview();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.getElementById("btn-next").addEventListener("click", () => {
+      if (currentStep < totalSteps - 1) showStep(currentStep + 1);
+    });
+    document.getElementById("btn-prev").addEventListener("click", () => {
+      if (currentStep > 0) showStep(currentStep - 1);
+    });
+    document.querySelectorAll(".step-btn").forEach(b => {
+      b.addEventListener("click", () => showStep(+b.dataset.step));
+    });
+
+    // ========== DATA COLLECTION ==========
+    function getChecked(name) {
+      return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(c => c.value).join("; ") || "—";
+    }
+    function val(name) {
+      const el = form.elements[name];
+      return el ? (el.value || "—") : "—";
+    }
+    function formatDate(d) {
+      if (!d || d === "—") return "—";
+      const [y, m, day] = d.split("-");
+      return `${day}/${m}/${y}`;
+    }
+
+    function collectData() {
+      const data = {};
+      [...form.elements].forEach(el => {
+        if (!el.name) return;
+        if (el.type === "checkbox") return;
+        data[el.name] = el.value || "";
+      });
+      data.bk_pribadi = getChecked("bk_pribadi");
+      data.bk_ayah = getChecked("bk_ayah");
+      data.bk_ibu = getChecked("bk_ibu");
+      data.prestasi = [];
+      for (let i = 1; i <= prestasiCount; i++) {
+        const nama = val(`prestasi_nama_${i}`);
+        if (nama && nama !== "—") {
+          data.prestasi.push({
+            jenis: val(`prestasi_jenis_${i}`),
+            tingkat: val(`prestasi_tingkat_${i}`),
+            nama,
+            tahun: val(`prestasi_tahun_${i}`),
+            penyelenggara: val(`prestasi_penyelenggara_${i}`),
+            peringkat: val(`prestasi_peringkat_${i}`)
+          });
+        }
+      }
+      return data;
+    }
+
+    function buildPreview() {
+      const d = collectData();
+      const lines = [
+        `<strong>Nama:</strong> ${d.nama_lengkap || "—"}`,
+        `<strong>Jenis Kelamin:</strong> ${d.jenis_kelamin || "—"}`,
+        `<strong>NISN:</strong> ${d.nisn || "—"}`,
+        `<strong>NIK:</strong> ${d.nik || "—"}`,
+        `<strong>Tempat/Tgl Lahir:</strong> ${d.tempat_lahir || "—"}, ${formatDate(d.tanggal_lahir)}`,
+        `<strong>Agama:</strong> ${d.agama || "—"}`,
+        `<strong>Alamat:</strong> ${d.alamat_jalan || "—"}, RT ${d.rt || "—"}/RW ${d.rw || "—"}, ${d.kelurahan || "—"}, ${d.kecamatan || "—"}`,
+        `<strong>Ayah:</strong> ${d.nama_ayah || "—"} (${d.pekerjaan_ayah || "—"})`,
+        `<strong>Ibu:</strong> ${d.nama_ibu || "—"} (${d.pekerjaan_ibu || "—"})`,
+        `<strong>HP:</strong> ${d.no_hp || "—"} | <strong>Email:</strong> ${d.email || "—"}`,
+        `<strong>Jenis Pendaftaran:</strong> ${d.jenis_pendaftaran || "—"} | <strong>Sekolah Asal:</strong> ${d.sekolah_asal || "—"}`
+      ];
+      document.getElementById("preview-summary").innerHTML = lines.join("<br>");
+    }
+
+    // ========== PDF GENERATION ==========
+    function field(num, label, value) {
+      return `<div class="field"><span class="num">${num}</span><span class="label">${label}</span><span class="value">${value || "—"}</span></div>`;
+    }
+
+    function buildPDFContent(d) {
+      const tgl = formatDate(d.tanggal_formulir);
+      let html = `
+        <h1>FORMULIR PESERTA DIDIK</h1>
+        <div class="subtitle">F-PD &nbsp;&nbsp;&nbsp; Tanggal: ${tgl}</div>
+
+        <div class="section-title">DATA PRIBADI</div>
+        ${field("1", "Nama Lengkap", d.nama_lengkap)}
+        ${field("2", "Jenis Kelamin", d.jenis_kelamin)}
+        ${field("3", "NISN", d.nisn)}
+        ${field("4", "NIK / No. KITAS", d.nik)}
+        ${field("5", "No. KK", d.no_kk)}
+        ${field("6", "Tempat Lahir", d.tempat_lahir)}
+        ${field("7", "Tanggal Lahir", formatDate(d.tanggal_lahir))}
+        ${field("8", "No. Registrasi Akta Lahir", d.no_akta)}
+        ${field("9", "Agama & Kepercayaan", d.agama)}
+        ${field("10", "Kewarganegaraan", d.kewarganegaraan + (d.nama_negara ? " — " + d.nama_negara : ""))}
+        ${field("11", "Berkebutuhan Khusus", d.bk_pribadi)}
+        ${field("12", "Alamat Jalan", d.alamat_jalan)}
+        ${field("13", "RT", d.rt)}
+        ${field("14", "RW", d.rw)}
+        ${field("15", "Nama Dusun", d.dusun)}
+        ${field("16", "Nama Kelurahan/Desa", d.kelurahan)}
+        ${field("17", "Kecamatan", d.kecamatan)}
+        ${field("18", "Kode Pos", d.kode_pos)}
+        ${field("19", "Lintang", d.lintang)}
+        ${field("20", "Bujur", d.bujur)}
+        ${field("21", "Tempat Tinggal", d.tempat_tinggal)}
+        ${field("22", "Moda Transportasi", d.moda_transportasi)}
+        ${field("23", "Anak keberapa", d.anak_ke)}
+        ${field("24", "Pekerjaan (Warga Belajar)", d.pekerjaan_pd)}
+        ${field("25", "Apakah punya KIP", d.punya_kip)}
+        ${field("26", "Tetap menerima KIP", d.terima_kip)}
+        ${field("27", "Alasan menolak PIP", d.alasan_tolak_pip)}
+
+        <div class="section-title">DATA AYAH KANDUNG</div>
+        ${field("28", "Nama Ayah Kandung", d.nama_ayah)}
+        ${field("29", "NIK Ayah", d.nik_ayah)}
+        ${field("30", "Tahun Lahir", d.tahun_lahir_ayah)}
+        ${field("31", "Pendidikan", d.pendidikan_ayah)}
+        ${field("32", "Pekerjaan", d.pekerjaan_ayah)}
+        ${field("33", "Penghasilan Bulanan", d.penghasilan_ayah)}
+        ${field("34", "Berkebutuhan Khusus", d.bk_ayah)}
+
+        <div class="section-title">DATA IBU KANDUNG</div>
+        ${field("35", "Nama Ibu Kandung", d.nama_ibu)}
+        ${field("36", "NIK Ibu", d.nik_ibu)}
+        ${field("37", "Tahun Lahir", d.tahun_lahir_ibu)}
+        ${field("38", "Pendidikan", d.pendidikan_ibu)}
+        ${field("39", "Pekerjaan", d.pekerjaan_ibu)}
+        ${field("40", "Penghasilan Bulanan", d.penghasilan_ibu)}
+        ${field("41", "Berkebutuhan Khusus", d.bk_ibu)}
+
+        <div class="section-title">DATA WALI</div>
+        ${field("42", "Nama Wali", d.nama_wali)}
+        ${field("43", "NIK Wali", d.nik_wali)}
+        ${field("44", "Tahun Lahir", d.tahun_lahir_wali)}
+        ${field("45", "Pendidikan", d.pendidikan_wali)}
+        ${field("46", "Pekerjaan", d.pekerjaan_wali)}
+        ${field("47", "Penghasilan Bulanan", d.penghasilan_wali)}
+
+        <div class="section-title">KONTAK</div>
+        ${field("48", "Nomor Telepon Rumah", d.telp_rumah)}
+        ${field("49", "Nomor HP", d.no_hp)}
+        ${field("50", "Email", d.email)}
+
+        <div class="section-title">DATA PERIODIK</div>
+        ${field("1", "Tinggi Badan", (d.tinggi_badan ? d.tinggi_badan + " cm" : "—"))}
+        ${field("2", "Berat Badan", (d.berat_badan ? d.berat_badan + " Kg" : "—"))}
+        ${field("3", "Lingkar Kepala", (d.lingkar_kepala ? d.lingkar_kepala + " cm" : "—"))}
+        ${field("4", "Jarak tempat tinggal ke sekolah", d.jarak_sekolah + (d.jarak_km ? " (" + d.jarak_km + " km)" : ""))}
+        ${field("5", "Waktu Tempuh ke sekolah", (d.waktu_jam || "0") + " jam " + (d.waktu_menit || "0") + " menit")}
+        ${field("6", "Jumlah Saudara Kandung", d.saudara_kandung)}
+      `;
+
+      if (d.prestasi && d.prestasi.length) {
+        html += `<div class="section-title">PRESTASI</div>
+          <table><thead><tr><th>No</th><th>Jenis</th><th>Tingkat</th><th>Nama Prestasi</th><th>Tahun</th><th>Penyelenggara</th><th>Peringkat</th></tr></thead><tbody>`;
+        d.prestasi.forEach((p, i) => {
+          html += `<tr><td>${i+1}</td><td>${p.jenis}</td><td>${p.tingkat}</td><td>${p.nama}</td><td>${p.tahun}</td><td>${p.penyelenggara}</td><td>${p.peringkat}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+      }
+
+      html += `
+        <div class="section-title">BEASISWA</div>
+        ${field("", "Jenis Beasiswa", d.jenis_beasiswa)}
+        ${field("", "Keterangan", d.ket_beasiswa)}
+        ${field("", "Tahun Mulai / Selesai", (d.tahun_mulai_beasiswa || "—") + " / " + (d.tahun_selesai_beasiswa || "—"))}
+
+        <div class="section-title">KESEJAHTERAAN PESERTA DIDIK</div>
+        ${field("8", "Jenis Kesejahteraan", d.jenis_kesejahteraan)}
+        ${field("9", "No. Kartu", d.no_kartu_kesejahteraan)}
+        ${field("10", "Nama di Kartu", d.nama_di_kartu)}
+
+        <div class="section-title">REGISTRASI PESERTA DIDIK</div>
+        ${field("1", "Kompetensi Keahlian", d.kompetensi_keahlian)}
+        ${field("2", "Jenis Pendaftaran", d.jenis_pendaftaran)}
+        ${field("3", "NIS / Nomor Induk PD", d.nis)}
+        ${field("4", "Tanggal Masuk Sekolah", formatDate(d.tanggal_masuk))}
+        ${field("5", "Sekolah Asal", d.sekolah_asal)}
+        ${field("6", "Nomor Peserta UN SMP/MTs", d.no_un)}
+        ${field("7", "No. Seri Ijazah SMP/MTs", d.no_ijazah)}
+        ${field("8", "No. SKHUN SMP/MTs", d.no_skhun)}
+      `;
+
+      if (d.keluar_karena) {
+        html += `
+          <div class="section-title">PENDAFTARAN KELUAR</div>
+          ${field("1", "Keluar Karena", d.keluar_karena)}
+          ${field("2", "Tanggal Keluar", formatDate(d.tanggal_keluar))}
+          ${field("3", "Alasan", d.alasan_keluar)}
+        `;
+      }
+
+      html += `
+        <div class="sig-box">
+          <div class="sig">
+            <div>${d.tempat_ttd || "........................"}, ${tgl}</div>
+            <div style="margin-top:8pt">Wali Kelas</div>
+            <div class="line">................................</div>
+          </div>
+          <div class="sig">
+            <div>${d.tempat_ttd || "........................"}, ${tgl}</div>
+            <div style="margin-top:8pt">Orang Tua / Wali Siswa</div>
+            <div class="line">................................</div>
+          </div>
+        </div>
+        <p style="font-size:8.5pt;margin-top:12pt;text-align:center;font-style:italic">
+          Yang bertanda tangan Orang Tua/Wali dan Wali Kelas bertanggung jawab secara hukum terhadap kebenaran data yang tercantum.
+        </p>
+      `;
+      return html;
+    }
+
+    function preparePDFContent() {
+      const d = collectData();
+      if (!d.nama_lengkap || d.nama_lengkap === "—") {
+        alert("Nama Lengkap wajib diisi.");
+        showStep(0);
+        return null;
+      }
+      const content = document.getElementById("pdf-content");
+      content.innerHTML = buildPDFContent(d);
+      return { content, d };
+    }
+
+    // Tombol Unduh PDF (html2pdf)
+    document.getElementById("btn-pdf").addEventListener("click", async () => {
+      const prep = preparePDFContent();
+      if (!prep) return;
+      const { content, d } = prep;
+
+      const btn = document.getElementById("btn-pdf");
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Sedang membuat PDF...";
+
+      // Pastikan elemen terlihat sementara untuk rendering (di luar layar)
+      content.classList.add("generating");
+      content.style.visibility = "visible";
+      content.style.left = "0";
+      content.style.top = "0";
+      content.style.zIndex = "9999";
+      content.style.background = "#fff";
+
+      // Tunggu layout selesai
+      await new Promise(r => setTimeout(r, 300));
+
+      const filename = `Formulir_Peserta_Didik_${(d.nama_lengkap || "siswa").replace(/[^\w\s-]/g, "").replace(/\s+/g, "_")}.pdf`;
+
+      const opt = {
+        margin:       [10, 10, 10, 10],
+        filename:     filename,
+        image:        { type: "jpeg", quality: 0.95 },
+        html2canvas:  {
+          scale: 1.5,
+          useCORS: true,
+          logging: false,
+          letterRendering: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          windowWidth: 794,   // ~A4 width in px at 96dpi
+          scrollX: 0,
+          scrollY: 0
+        },
+        jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak:    { mode: ["css", "legacy"], avoid: [".field", ".sig-box", "table", "tr"] }
+      };
+
+      try {
+        await html2pdf().set(opt).from(content).save();
+      } catch (err) {
+        console.error("html2pdf error:", err);
+        alert("Gagal membuat PDF otomatis.\n\nSilakan gunakan tombol \"Cetak (Print)\" lalu pilih \"Save as PDF\" / \"Microsoft Print to PDF\". Cara ini hampir selalu berhasil.");
+      } finally {
+        content.classList.remove("generating");
+        content.style.visibility = "hidden";
+        content.style.left = "-9999px";
+        content.style.zIndex = "-1";
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+
+    // Tombol Cetak via Browser (lebih stabil)
+    document.getElementById("btn-print").addEventListener("click", () => {
+      const prep = preparePDFContent();
+      if (!prep) return;
+      const { content } = prep;
+
+      content.classList.add("generating");
+      content.style.visibility = "visible";
+      content.style.left = "0";
+      content.style.top = "0";
+      content.style.position = "absolute";
+      content.style.zIndex = "9999";
+      content.style.background = "#fff";
+      content.style.width = "210mm";
+
+      // Tunggu sebentar agar browser render
+      setTimeout(() => {
+        window.print();
+        // Kembalikan setelah dialog print ditutup
+        setTimeout(() => {
+          content.classList.remove("generating");
+          content.style.visibility = "hidden";
+          content.style.left = "-9999px";
+          content.style.position = "fixed";
+          content.style.zIndex = "-1";
+        }, 1000);
+      }, 400);
+    });
+  </script>
+</body>
+</html>
