@@ -950,12 +950,17 @@
             ]
         };
 
-        // Format nomor HP agar valid untuk link WhatsApp API
+        // Format nomor HP agar valid untuk link WhatsApp API (khusus format Indonesia)
         function formatNomorWa(noHp) {
-            let cleaned = ('' + noHp).replace(/\D/g, '');
+            if (!noHp) return '';
+            let cleaned = ('' + noHp).replace(/\D/g, ''); // Hapus karakter non-digit
+            
             if (cleaned.startsWith('0')) {
                 cleaned = '62' + cleaned.substring(1);
+            } else if (cleaned.startsWith('8')) {
+                cleaned = '62' + cleaned;
             }
+            
             return cleaned;
         }
 
@@ -1290,6 +1295,30 @@ Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima k
             });
         }
 
+        function kirimWaStatusPendaftar(namaSiswa, noWa, status, kodeReg) {
+            if (!noWa || noWa === '-' || noWa.trim() === '') {
+                showToast("Nomor WhatsApp pendaftar tidak tersedia!", "error");
+                return;
+            }
+
+            const cleanNoWa = formatNomorWa(noWa);
+            const statusStr = status || "Belum Terverifikasi";
+            const msg = `Assalamu'alaikum Warahmatullahi Wabarakatuh,
+
+Yth. Orang Tua/Wali dari *${namaSiswa}* (No. Reg: *${kodeReg}*),
+
+Kami dari Panitia SPMB *${CONFIG_SPMB.namaSekolah}* menginformasikan bahwa status pendaftaran putra/putri Anda saat ini adalah:
+
+📌 *STATUS: ${statusStr.toUpperCase()}*
+
+Terima kasih atas perhatian dan kerja samanya.
+Wassalamu'alaikum Warahmatullahi Wabarakatuh.
+*Panitia SPMB ${CONFIG_SPMB.namaSekolah}*`;
+
+            const url = `https://wa.me/${cleanNoWa}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }
+
         async function muatDataPendaftarAdmin() {
             const tbody = document.getElementById('tblPendaftarBody');
             const selectTahun = document.getElementById('selectTahunPendaftar').value;
@@ -1314,7 +1343,11 @@ Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima k
                                     <option value="Ditolak" ${app["Status"] === "Ditolak" ? "selected" : ""}>Ditolak</option>
                                 </select>
                             </td>
-                            <td class="p-3 text-center">
+                            <td class="p-3 text-center flex items-center justify-center gap-1">
+                                <button onclick="kirimWaStatusPendaftar('${(app["Nama Siswa"] || '').replace(/'/g, "\\'")}', '${app["No WA"] || ''}', '${app["Status"] || ''}', '${app["Kode Reg"] || ''}')" class="p-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg text-xs flex items-center gap-1" title="Kirim Status via WhatsApp">
+                                    <i class="ph ph-whatsapp-logo text-sm"></i>
+                                    <span>Kirim WA</span>
+                                </button>
                                 <button onclick="hapusSatuPendaftar(${app.rowIndex})" class="p-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-xs" title="Hapus Siswa">
                                     <i class="ph ph-trash"></i>
                                 </button>
