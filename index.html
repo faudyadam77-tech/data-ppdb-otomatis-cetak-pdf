@@ -86,7 +86,7 @@
                 <a href="#cek-status" class="hover:text-blue-900 transition-colors text-amber-600 font-bold">Cek Status</a>
                 <button onclick="bukaModalLoginAdmin()" class="hover:text-amber-600 transition-colors flex items-center gap-1 text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-200">
                     <i class="ph ph-user-gear text-base text-amber-500"></i>
-                    <span>Panel Admin</span>
+                    <span>Admin Panel</span>
                 </button>
             </div>
 
@@ -486,7 +486,7 @@
                         <i class="ph ph-magnifying-glass text-sm"></i> Layanan Mandiri
                     </span>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Cek Status Pendaftaran</h2>
-                    <p class="text-xs sm:text-sm text-slate-300">Masukkan Nomor Registrasi pendaftaran Anda (contoh: <span class="font-mono text-amber-400">SPMB-2027-1234</span>) untuk melihat status verifikasi.</p>
+                    <p class="text-xs sm:text-sm text-slate-300">Masukkan Nomor Registrasi pendaftaran Anda (contoh: <span class="font-mono text-amber-400">SPMB-2027-10214829</span>) untuk melihat status verifikasi.</p>
                 </div>
 
                 <form onsubmit="cariStatusPendaftar(event)" class="max-w-md mx-auto space-y-4 relative z-10">
@@ -692,7 +692,7 @@
                                 <th class="p-3">Ortu / WA</th>
                                 <th class="p-3">JK</th>
                                 <th class="p-3">Status</th>
-                                <th class="p-3 text-center">Aksi</th>
+                                <th class="p-3 text-center">Aksi & WA</th>
                             </tr>
                         </thead>
                         <tbody id="tblPendaftarBody" class="divide-y divide-slate-100">
@@ -950,11 +950,17 @@
             ]
         };
 
-        // Format nomor HP agar valid untuk link WhatsApp API
+        // Format nomor HP agar valid untuk link WhatsApp API (Mencegah format +82 xxxx)
         function formatNomorWa(noHp) {
+            if (!noHp) return '';
+            // Ambil hanya digit angka
             let cleaned = ('' + noHp).replace(/\D/g, '');
+            
+            // Mengubah format lokal 08xxx menjadi format internasional 628xxx
             if (cleaned.startsWith('0')) {
                 cleaned = '62' + cleaned.substring(1);
+            } else if (cleaned.startsWith('8')) {
+                cleaned = '62' + cleaned;
             }
             return cleaned;
         }
@@ -982,12 +988,11 @@
             }, 4000);
         }
 
-        // Kalkulasi Status Gelombang (Diperbaiki agar di-parse dalam zona waktu lokal)
+        // Kalkulasi Status Gelombang
         function hitungStatusGelombang(startDateStr, endDateStr) {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Mengubah format YYYY-MM-DD menjadi YYYY/MM/DD agar JavaScript mem-parse dalam zona waktu lokal
             const start = new Date(startDateStr.replace(/-/g, '/'));
             const end = new Date(endDateStr.replace(/-/g, '/'));
             end.setHours(23, 59, 59, 999);
@@ -1016,17 +1021,14 @@
         }
 
         function renderUIWithConfig() {
-            // Pasang Logo
             document.getElementById('imgLogoNav').src = CONFIG_SPMB.logoSekolahUrl;
             document.getElementById('imgLogoFooter').src = CONFIG_SPMB.logoSekolahUrl;
 
-            // Pasang Background Hero
             const heroElem = document.getElementById('beranda');
             if (CONFIG_SPMB.heroBgImageUrl) {
                 heroElem.style.backgroundImage = `url('${CONFIG_SPMB.heroBgImageUrl}')`;
             }
 
-            // Teks Identitas Sekolah
             document.getElementById('txtNamaNav').innerText = CONFIG_SPMB.namaSekolah;
             document.getElementById('txtNamaSekolah').innerText = CONFIG_SPMB.namaSekolah;
             document.getElementById('txtFooterNamaSekolah').innerText = CONFIG_SPMB.namaSekolah;
@@ -1040,11 +1042,9 @@
             document.getElementById('txtFooterTelp').innerText = CONFIG_SPMB.teleponWaPanitia;
             document.getElementById('txtFooterEmail').innerText = CONFIG_SPMB.email;
 
-            // Link Unduhan File Fisik
             document.getElementById('btnUnduhBrosur').href = CONFIG_SPMB.linkDownloadBrosur;
             document.getElementById('btnUnduhFormManual').href = CONFIG_SPMB.linkDownloadFormManual;
 
-            // Link WA Hero Section
             const waCleanPanitia = formatNomorWa(CONFIG_SPMB.teleponWaPanitia);
             const defaultHeroWaMsg = encodeURIComponent(`Assalamu'alaikum Panitia SPMB ${CONFIG_SPMB.namaSekolah}, saya ingin bertanya mengenai pendaftaran.`);
             document.getElementById('btnWaHero').href = `https://wa.me/${waCleanPanitia}?text=${defaultHeroWaMsg}`;
@@ -1071,7 +1071,6 @@
                 </div>
             `).join('');
 
-            // Logika Tombol "Lihat Semua Foto"
             const btnLihatSemua = document.getElementById('btnLihatSemuaGaleri');
             const boxGaleriBtn = document.getElementById('boxGaleriBtn');
             
@@ -1088,7 +1087,7 @@
                 });
             }
 
-            // Render Gelombang Pendaftaran
+            // Render Gelombang
             const boxGel = document.getElementById('listGelombang');
             boxGel.innerHTML = CONFIG_SPMB.gelombang.map(g => {
                 const statusInfo = hitungStatusGelombang(g.start, g.end);
@@ -1105,7 +1104,7 @@
                 `;
             }).join('');
 
-            // Render Persyaratan Berkas Fisik
+            // Render Syarat
             const boxSyarat = document.getElementById('listSyarat');
             boxSyarat.innerHTML = CONFIG_SPMB.persyaratanFisik.map(s => `
                 <li class="flex items-start gap-2">
@@ -1114,13 +1113,13 @@
                 </li>
             `).join('');
 
-            // Mobile Menu Toggle
+            // Mobile Menu
             document.getElementById('menuToggle').addEventListener('click', () => {
                 document.getElementById('mobileDrawer').classList.toggle('hidden');
             });
         });
 
-        // Proses Form Pendaftaran & Kirim ke Google Apps Script
+        // Simpan Pendaftaran
         async function simpanPendaftaran(e) {
             e.preventDefault();
 
@@ -1137,10 +1136,13 @@
             const formData = new FormData(form);
             const dataObj = Object.fromEntries(formData.entries());
 
-            // Generate Kode Registrasi Unik
-            const randomId = Math.floor(1000 + Math.random() * 9000);
-            const kodeReg = `SPMB-${new Date().getFullYear()}-${randomId}`;
-            const tglDaftar = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            const now = new Date();
+            const tahunAktif = now.getFullYear();
+            const timestamp4Digit = Date.now().toString().slice(-4);
+            const random4Digit = Math.floor(1000 + Math.random() * 9000);
+            
+            const kodeReg = `SPMB-${tahunAktif}-${timestamp4Digit}${random4Digit}`;
+            const tglDaftar = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
             const payload = {
                 action: "register",
@@ -1162,39 +1164,39 @@
             } catch (err) {
                 console.warn("Koneksi Google Script gagal / mode offline.", err);
             } finally {
-                // Isi Modal Bukti
                 document.getElementById('mKode').innerText = kodeReg;
                 document.getElementById('mNama').innerText = dataObj.namaSiswa || "-";
                 document.getElementById('mOrtu').innerText = dataObj.namaAyah || "-";
                 document.getElementById('mWaOrtu').innerText = dataObj.noWa || "-";
                 document.getElementById('mTgl').innerText = tglDaftar;
 
-                // Format Pesan WhatsApp Konfirmasi ke Panitia
                 const waPanitiaClean = formatNomorWa(CONFIG_SPMB.teleponWaPanitia);
+                
+                // Format Pesan Baru Sesuai Permintaan
                 const waText = 
-`Assalamu'alaikum Warahmatullahi Wabarakatuh,
-Panitia SPMB ${CONFIG_SPMB.namaSekolah}.
-
-Saya telah mengisi *Formulir Pendaftaran Online SPMB* melalui website. Berikut adalah detail data calon siswa:
-
-📌 *NO. REGISTRASI:* ${kodeReg}
-👤 *Nama Calon Siswa:* ${dataObj.namaSiswa}
-🚻 *Jenis Kelamin:* ${dataObj.jenisKelamin}
-🏫 *Asal TK/PAUD:* ${dataObj.asalSekolah || '-'}
-👨‍👩‍👦 *Nama Orang Tua:* ${dataObj.namaAyah}
-📱 *No. WA Orang Tua:* ${dataObj.noWa}
-🏠 *Alamat:* ${dataObj.alamatLengkap}
-
-Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima kasih.`;
+                    "Assalamu'alaikum wr wb...\n" +
+                    "Panitia PPDB SD MUHAMMADIYAH 001 MELAK..\n\n" +
+                    "Saya Mengirimkan Bukti Formulir Pendaftaran Ini..\n\n" +
+                    "Kode pendaftaran : " + kodeReg + "\n" +
+                    "Nama Siswa: " + dataObj.namaSiswa + "\n" +
+                    "Jenis Kelamin: " + dataObj.jenisKelamin + "\n" +
+                    "NIK: " + dataObj.nikSiswa + "\n" +
+                    "Tempat Lahir: " + dataObj.tempatLahir + "\n" +
+                    "Tanggal Lahir: " + dataObj.tglLahir + "\n" +
+                    "Asal Sekolah: " + (dataObj.asalSekolah || '-') + "\n" +
+                    "Nama Ayah: " + dataObj.namaAyah + "\n" +
+                    "Nama Ibu: " + dataObj.namaIbu + "\n" +
+                    "No WA: " + dataObj.noWa + "\n" +
+                    "Pekerjaan Orang Tua: " + (dataObj.pekerjaanOrtu || '-') + "\n" +
+                    "Alamat: " + dataObj.alamatLengkap + "\n\n" +
+                    "Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima kasih.";
 
                 const encodedWaMsg = encodeURIComponent(waText);
                 document.getElementById('btnKirimWaKonfirmasi').href = `https://wa.me/${waPanitiaClean}?text=${encodedWaMsg}`;
 
-                // Tampilkan Modal Hasil & Toast Notification
                 document.getElementById('modalBukti').classList.remove('hidden');
                 showToast("Pendaftaran berhasil disimpan!", "info");
 
-                // Reset Button & Form
                 btnSubmit.disabled = false;
                 btnSubmit.classList.remove('opacity-70', 'cursor-not-allowed');
                 textSubmit.innerText = "Simpan & Kirim Pendaftaran";
@@ -1208,7 +1210,7 @@ Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima k
         }
 
         /* =========================================================================
-           LOGIKA ADMIN PANEL & FITUR KONTROL
+           LOGIKA ADMIN PANEL & FITUR KONTROL NOTIFIKASI WA
            ========================================================================= */
         function bukaModalLoginAdmin() {
             document.getElementById('modalLoginAdmin').classList.remove('hidden');
@@ -1256,7 +1258,6 @@ Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima k
 
         function bukaDashboardAdmin() {
             document.getElementById('modalDashboardAdmin').classList.remove('hidden');
-            // Populate form info sekolah
             document.getElementById('admNamaSekolah').value = CONFIG_SPMB.namaSekolah;
             document.getElementById('admNpsn').value = CONFIG_SPMB.npsn;
             document.getElementById('admAkreditasi').value = CONFIG_SPMB.akreditasi;
@@ -1290,6 +1291,9 @@ Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima k
             });
         }
 
+        // Variabel global untuk menyimpan data pendaftar aktif di admin
+        let listPendaftarAktif = [];
+
         async function muatDataPendaftarAdmin() {
             const tbody = document.getElementById('tblPendaftarBody');
             const selectTahun = document.getElementById('selectTahunPendaftar').value;
@@ -1300,14 +1304,15 @@ Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima k
                 const data = await res.json();
                 
                 if (data.status === 'success' && data.applicants.length > 0) {
-                    tbody.innerHTML = data.applicants.map(app => `
+                    listPendaftarAktif = data.applicants;
+                    tbody.innerHTML = data.applicants.map((app, idx) => `
                         <tr class="hover:bg-slate-50">
                             <td class="p-3 font-mono text-[11px] text-amber-600 font-bold">${app["Kode Reg"] || '-'}</td>
                             <td class="p-3 font-semibold text-slate-800">${app["Nama Siswa"] || '-'}<br><span class="text-[10px] text-slate-400 font-normal">NIK: ${app["NIK Siswa"] || '-'}</span></td>
                             <td class="p-3">${app["Nama Ayah"] || '-'}<br><span class="text-[10px] text-emerald-600 font-medium">${app["No WA"] || '-'}</span></td>
                             <td class="p-3">${app["Jenis Kelamin"] || '-'}</td>
                             <td class="p-3">
-                                <select onchange="ubahStatusPendaftar(${app.rowIndex}, this.value)" class="px-2 py-1 text-[11px] rounded-lg border border-slate-300 font-medium">
+                                <select id="selStatus_${idx}" onchange="ubahStatusPendaftar(${app.rowIndex}, this.value, ${idx})" class="px-2 py-1 text-[11px] rounded-lg border border-slate-300 font-medium">
                                     <option value="Belum Terverifikasi" ${app["Status"] === "Belum Terverifikasi" ? "selected" : ""}>Belum Terverifikasi</option>
                                     <option value="Terverifikasi" ${app["Status"] === "Terverifikasi" ? "selected" : ""}>Terverifikasi</option>
                                     <option value="Diterima" ${app["Status"] === "Diterima" ? "selected" : ""}>Diterima</option>
@@ -1315,13 +1320,19 @@ Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima k
                                 </select>
                             </td>
                             <td class="p-3 text-center">
-                                <button onclick="hapusSatuPendaftar(${app.rowIndex})" class="p-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-xs" title="Hapus Siswa">
-                                    <i class="ph ph-trash"></i>
-                                </button>
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <button onclick="kirimNotifikasiWaAdmin(${idx})" class="p-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg text-xs flex items-center gap-1 font-bold" title="Kirim Notifikasi Status via WA">
+                                        <i class="ph ph-whatsapp-logo text-base"></i>
+                                    </button>
+                                    <button onclick="hapusSatuPendaftar(${app.rowIndex})" class="p-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-xs" title="Hapus Siswa">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `).join('');
                 } else {
+                    listPendaftarAktif = [];
                     tbody.innerHTML = `<tr><td colspan="6" class="text-center p-4 text-slate-400">Belum ada data pendaftar untuk tahun ajaran ini.</td></tr>`;
                 }
             } catch(err) {
@@ -1329,8 +1340,56 @@ Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima k
             }
         }
 
-        async function ubahStatusPendaftar(rowIndex, newStatus) {
+        // Fungsi Admin Kirim Notifikasi Status ke WA Pendaftar
+        function kirimNotifikasiWaAdmin(index) {
+            const pendaftar = listPendaftarAktif[index];
+            if (!pendaftar) return;
+
+            // Menggunakan properti dengan berbagai variasi penamaan kolom dari Spreadsheet
+            const noWaOrtu = pendaftar["No WA"] || pendaftar["noWa"] || pendaftar["No. WA"] || pendaftar["No WhatsApp"] || pendaftar["No WA Ortu"] || "";
+            const noWaClean = formatNomorWa(noWaOrtu);
+
+            if (!noWaClean) {
+                showToast("Nomor WA pendaftar tidak valid atau belum diisi!", "error");
+                return;
+            }
+
+            const namaSiswa = pendaftar["Nama Siswa"] || pendaftar["namaSiswa"] || "-";
+            const kodeReg = pendaftar["Kode Reg"] || pendaftar["kodeReg"] || "-";
+            const statusCurrent = pendaftar["Status"] || document.getElementById(`selStatus_${index}`).value;
+
+            let pesanDetail = "";
+            if (statusCurrent === "Diterima") {
+                pesanDetail = "Selamat! Calon peserta didik telah *DITERIMA* di " + CONFIG_SPMB.namaSekolah + ". Silakan lakukan pendaftaran ulang dan melengkapi berkas fisik ke sekolah.";
+            } else if (statusCurrent === "Terverifikasi") {
+                pesanDetail = "Berkas pendaftaran Anda telah *TERVERIFIKASI*. Tim panitia sedang melakukan peninjauan akhir.";
+            } else if (statusCurrent === "Ditolak") {
+                pesanDetail = "Mohon maaf, status pendaftaran Anda saat ini *DITOLAK* / belum dapat diterima. Silakan hubungi panitia jika ada pertanyaan.";
+            } else {
+                pesanDetail = "Status pendaftaran Anda saat ini adalah *BELUM TERVERIFIKASI*. Mohon segera konfirmasi atau serahkan berkas fisik ke sekretariat sekolah.";
+            }
+
+            const textWaMsg = 
+                "Assalamu'alaikum Warahmatullahi Wabarakatuh,\n" +
+                "Yth. Orang Tua / Wali dari Ananda *"+ namaSiswa +"*.\n\n" +
+                "Pemberitahuan resmi dari Panitia SPMB *" + CONFIG_SPMB.namaSekolah + "*:\n\n" +
+                "📌 *Kode Registrasi:* " + kodeReg + "\n" +
+                "👤 *Nama Siswa:* " + namaSiswa + "\n" +
+                "📊 *Status Pendaftaran:* *" + statusCurrent.toUpperCase() + "*\n\n" +
+                "ℹ️ *Keterangan:*\n" + pesanDetail + "\n\n" +
+                "Terima kasih atas perhatian Anda.\n\n" +
+                "Wassalamu'alaikum Warahmatullahi Wabarakatuh.\n" +
+                "_Panitia SPMB " + CONFIG_SPMB.namaSekolah + "_";
+
+            const encodedWaMsg = encodeURIComponent(textWaMsg);
+            window.open(`https://wa.me/${noWaClean}?text=${encodedWaMsg}`, '_blank');
+        }
+
+        async function ubahStatusPendaftar(rowIndex, newStatus, arrayIndex) {
             const selectTahun = document.getElementById('selectTahunPendaftar').value;
+            if (listPendaftarAktif[arrayIndex]) {
+                listPendaftarAktif[arrayIndex]["Status"] = newStatus;
+            }
             try {
                 await fetch(CONFIG_SPMB.googleScriptUrl, {
                     method: 'POST',
@@ -1482,86 +1541,67 @@ Mohon dapat ditindaklanjuti untuk proses verifikasi berkas selanjutnya. Terima k
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
-                        action: "updateConfig",
-                        config: { adminPassword: p1 }
+                        action: "updatePassword",
+                        newPassword: p1
                     })
                 });
-                showToast("Password admin berhasil diperbarui!", "info");
+                showToast("Password admin berhasil diubah!", "info");
                 document.getElementById('admPassBaru').value = "";
                 document.getElementById('admPassKonf').value = "";
             } catch(err) {
-                showToast("Gagal mengganti password", "error");
+                showToast("Gagal mengubah password", "error");
             }
         }
 
-        /* =========================================================================
-           LOGIKA CEK STATUS PENDAFTAR
-           ========================================================================= */
         async function cariStatusPendaftar(e) {
             e.preventDefault();
-            const kodeInput = document.getElementById('inCekKode').value.trim().toUpperCase();
+            const kode = document.getElementById('inCekKode').value.trim();
             const boxHasil = document.getElementById('hasilCekStatus');
-            const btn = document.getElementById('btnCekStatus');
-            const icon = document.getElementById('iconCek');
+            const btnCek = document.getElementById('btnCekStatus');
+            const iconCek = document.getElementById('iconCek');
             const txtBtn = document.getElementById('txtBtnCek');
 
-            if (!kodeInput) return;
+            if (!kode) return;
 
-            btn.disabled = true;
-            btn.classList.add('opacity-70');
-            icon.className = "ph ph-spinner-gap animate-spin text-lg";
+            btnCek.disabled = true;
+            iconCek.className = "ph ph-spinner-gap animate-spin text-lg";
             txtBtn.innerText = "Mencari...";
 
-            boxHasil.classList.remove('hidden');
-            boxHasil.innerHTML = `<div class="text-center py-4 text-slate-400 flex items-center justify-center gap-2"><i class="ph ph-spinner-gap animate-spin text-xl"></i> Memeriksa data pendaftaran...</div>`;
-
             try {
-                const res = await fetch(`${CONFIG_SPMB.googleScriptUrl}?action=getApplicants&tahunAjaran=${encodeURIComponent(CONFIG_SPMB.tahunAjaran)}`);
-                const data = await res.json();
+                const res = await fetch(`${CONFIG_SPMB.googleScriptUrl}?action=checkStatus&kodeReg=${encodeURIComponent(kode)}`);
+                const resData = await res.json();
 
-                if (data.status === 'success' && data.applicants) {
-                    const siswa = data.applicants.find(a => (a["Kode Reg"] || "").toString().trim().toUpperCase() === kodeInput);
+                boxHasil.classList.remove('hidden');
 
-                    if (siswa) {
-                        let badgeColor = "bg-amber-500/20 text-amber-400 border-amber-500/30";
-                        if (siswa["Status"] === "Terverifikasi") badgeColor = "bg-blue-500/20 text-blue-400 border-blue-500/30";
-                        if (siswa["Status"] === "Diterima") badgeColor = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
-                        if (siswa["Status"] === "Ditolak") badgeColor = "bg-red-500/20 text-red-400 border-red-500/30";
+                if (resData.status === 'success' && resData.applicant) {
+                    const app = resData.applicant;
+                    let bgBadge = "bg-amber-500/20 text-amber-400 border-amber-500/30";
+                    if (app.status === "Diterima") bgBadge = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+                    else if (app.status === "Ditolak") bgBadge = "bg-rose-500/20 text-rose-400 border-rose-500/30";
+                    else if (app.status === "Terverifikasi") bgBadge = "bg-blue-500/20 text-blue-400 border-blue-500/30";
 
-                        boxHasil.innerHTML = `
-                            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-                                <div>
-                                    <span class="text-[10px] uppercase font-bold text-slate-400">Nomor Registrasi</span>
-                                    <p class="font-mono text-base font-bold text-amber-400">${siswa["Kode Reg"]}</p>
-                                </div>
-                                <span class="px-3 py-1 rounded-full text-xs font-bold border ${badgeColor}">
-                                    ${siswa["Status"] || 'Belum Terverifikasi'}
-                                </span>
+                    boxHasil.innerHTML = `
+                        <div class="flex justify-between items-start border-b border-slate-700 pb-2">
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase font-mono">Kode Registrasi</span>
+                                <p class="font-mono text-amber-400 font-bold text-base">${app.kodeReg}</p>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 text-xs pt-1">
-                                <div><span class="text-slate-400">Nama Siswa:</span><p class="font-semibold text-white">${siswa["Nama Siswa"] || '-'}</p></div>
-                                <div><span class="text-slate-400">Jenis Kelamin:</span><p class="font-semibold text-white">${siswa["Jenis Kelamin"] || '-'}</p></div>
-                                <div><span class="text-slate-400">Orang Tua / Wali:</span><p class="font-semibold text-white">${siswa["Nama Ayah"] || '-'}</p></div>
-                                <div><span class="text-slate-400">Asal Sekolah:</span><p class="font-semibold text-white">${siswa["Asal Sekolah"] || '-'}</p></div>
-                            </div>
-                        `;
-                    } else {
-                        boxHasil.innerHTML = `
-                            <div class="text-center py-3 text-red-400 font-medium flex items-center justify-center gap-2">
-                                <i class="ph ph-x-circle text-xl"></i>
-                                Data dengan nomor registrasi <strong>${kodeInput}</strong> tidak ditemukan. Pastikan nomor registrasi sudah benar.
-                            </div>
-                        `;
-                    }
+                            <span class="px-3 py-1 rounded-full text-xs font-bold border ${bgBadge}">${app.status}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+                            <div><span class="text-slate-400">Nama Siswa:</span> <p class="font-semibold text-white">${app.namaSiswa}</p></div>
+                            <div><span class="text-slate-400">Tahun Ajaran:</span> <p class="font-semibold text-white">${app.tahunAjaran}</p></div>
+                        </div>
+                    `;
                 } else {
-                    boxHasil.innerHTML = `<div class="text-center py-3 text-red-400">Gagal terhubung ke database server.</div>`;
+                    boxHasil.innerHTML = `<p class="text-center text-rose-400 font-medium py-2">Data tidak ditemukan untuk kode registrasi: <strong>${kode}</strong></p>`;
                 }
-            } catch (err) {
-                boxHasil.innerHTML = `<div class="text-center py-3 text-red-400">Terjadi kesalahan sistem / offline.</div>`;
+            } catch(err) {
+                boxHasil.classList.remove('hidden');
+                boxHasil.innerHTML = `<p class="text-center text-rose-400 py-2">Terjadi kesalahan koneksi saat mengecek status.</p>`;
             } finally {
-                btn.disabled = false;
-                btn.classList.remove('opacity-70');
-                icon.className = "ph ph-magnifying-glass text-lg";
+                btnCek.disabled = false;
+                iconCek.className = "ph ph-magnifying-glass text-lg";
                 txtBtn.innerText = "Cek Status";
             }
         }
